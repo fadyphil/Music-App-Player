@@ -4,15 +4,30 @@ import 'package:music_player/core/theme/app_theme.dart';
 import 'package:music_player/features/local%20music/presentation/pages/song_list_page.dart';
 import 'package:music_player/core/di/init_dependencies.dart';
 import 'package:music_player/features/music_player/presentation/bloc/music_player_bloc.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart'; // Import this
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+
   await initDependencies();
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    FlutterNativeSplash.remove();
+  }
 
   // This widget is the root of your application.
   @override
@@ -23,7 +38,7 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        title: 'Music Player',
+        title: 'Spotify el 8alaba',
         theme: AppTheme.darkThemeMode,
         home: const SongListPage(),
       ),
