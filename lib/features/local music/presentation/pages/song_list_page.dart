@@ -23,13 +23,12 @@ class SongListPage extends StatefulWidget {
   State<SongListPage> createState() => _SongListPageState();
 }
 
-// Add WidgetsBindingObserver to detect when user comes back from Settings
 class _SongListPageState extends State<SongListPage>
     with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this); // Listen to App Lifecycle
+    WidgetsBinding.instance.addObserver(this);
     _initData();
   }
 
@@ -39,48 +38,37 @@ class _SongListPageState extends State<SongListPage>
     super.dispose();
   }
 
-  // Detect when user returns to the app (e.g., from Settings)
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      // Retry fetching when app resumes, in case user enabled permission
       _checkPermissionAndFetch();
     }
   }
 
   Future<void> _initData() async {
-    // We wait for the frame to build so we can show Dialogs if needed
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkPermissionAndFetch();
     });
   }
 
-  /// -----------------------------------------------------------------------
-  /// PROFESSIONAL PERMISSION HANDLING LOGIC
-  /// -----------------------------------------------------------------------
   Future<void> _checkPermissionAndFetch() async {
-    // 1. Determine which permission to ask based on Android Version
     Permission permission;
-
     if (Platform.isAndroid) {
       final androidInfo = await DeviceInfoPlugin().androidInfo;
       if (androidInfo.version.sdkInt >= 33) {
-        permission = Permission.audio; // Android 13+
+        permission = Permission.audio;
       } else {
-        permission = Permission.storage; // Android 12-
+        permission = Permission.storage;
       }
     } else {
-      // iOS handling (if applicable later)
       permission = Permission.mediaLibrary;
     }
 
-    // 2. Check current status
     final status = await permission.status;
 
     if (status.isGranted) {
       _fetchSongs();
     } else if (status.isDenied) {
-      // First time asking, or denied previously but not permanently
       final result = await permission.request();
       if (result.isGranted) {
         _fetchSongs();
@@ -88,34 +76,12 @@ class _SongListPageState extends State<SongListPage>
         _showGoToSettingsDialog();
       }
     } else if (status.isPermanentlyDenied) {
-      // User previously checked "Don't ask again"
       _showGoToSettingsDialog();
     }
   }
 
   void _fetchSongs() {
-    // Only add the event if the BLoC hasn't loaded data yet (optional optimization)
-    // context.read<LocalMusicBloc>().add(const LocalMusicEvent.getLocalSongs());
-
-    // For now, consistent with your logic:
     if (mounted) {
-      // Ensure context is valid
-      // Note: In your original code, you created the provider in build.
-      // If you want to trigger this, the BlocProvider needs to be above this widget
-      // OR you use a Builder/Consumer logic.
-      // *Assuming BlocProvider is created in the build method below*:
-      // We can't access it here easily unless we move Provider up or use a boolean flag
-      // to start fetching in the BlocBuilder.
-
-      // RECOMMENDATION: Logic keeps the state updated.
-      // The UI simply reacts. If permission granted, we trigger the load inside the BlocProvider creation?
-      // No, that's tricky with async permissions.
-
-      // UPDATED STRATEGY:
-      // We will pass a flag to the build method or let the Bloc handle the initial "Empty" state
-      // and trigger the event here via a global key or changing state variable.
-      // However, for this refactor, let's assume the build method handles the Provider.
-
       setState(() {
         _hasPermission = true;
       });
@@ -142,8 +108,7 @@ class _SongListPageState extends State<SongListPage>
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pop(context); // Close dialog
-              // Open App Settings
+              Navigator.pop(context);
               openAppSettings();
             },
             child: const Text(
@@ -163,28 +128,21 @@ class _SongListPageState extends State<SongListPage>
     );
   }
 
-  /// -----------------------------------------------------------------------
-  /// UI BUILD
-  /// -----------------------------------------------------------------------
-
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) {
         final bloc = serviceLocator<LocalMusicBloc>();
-        // Only fetch if permission logic determined it's safe
         if (_hasPermission) {
           bloc.add(const LocalMusicEvent.getLocalSongs());
         }
         return bloc;
       },
       child: Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        backgroundColor: AppPallete.backgroundColor,
         body: Stack(
           children: [
-            // Logic to handle the "Not Granted" state UI
             if (!_hasPermission) _buildPermissionRequestUI(),
-
             if (_hasPermission)
               BlocBuilder<LocalMusicBloc, LocalMusicState>(
                 builder: (context, state) {
@@ -202,11 +160,10 @@ class _SongListPageState extends State<SongListPage>
                         style: const TextStyle(color: Colors.white),
                       ),
                     ),
-                    loaded: (songs) => _buildSliverLayout(songs),
+                    loaded: (songs) => SliverLayout(songs: songs),
                   );
                 },
               ),
-
             Positioned(left: 0, right: 0, bottom: 0, child: const MiniPlayer()),
           ],
         ),
@@ -214,7 +171,6 @@ class _SongListPageState extends State<SongListPage>
     );
   }
 
-  // A nice UI to show when permission is missing (instead of a blank screen)
   Widget _buildPermissionRequestUI() {
     return Center(
       child: Column(
@@ -246,124 +202,243 @@ class _SongListPageState extends State<SongListPage>
     );
   }
 
-  // ... (Keep your existing _buildSliverLayout and sub-widgets exactly as they were)
-  Widget _buildSliverLayout(List<SongEntity> songs) {
+  // ---------------------------------------------------------------------------
+  // NEW SLIVER LAYOUT IMPLEMENTATION
+  // ---------------------------------------------------------------------------
+
+  String _formatDuration(int milliseconds) {
+    final duration = Duration(milliseconds: milliseconds);
+    final minutes = duration.inMinutes;
+    final seconds = duration.inSeconds.remainder(60);
+    return '$minutes:${seconds.toString().padLeft(2, '0')}';
+  }
+}
+
+class SliverLayout extends StatelessWidget {
+  const SliverLayout({super.key, required this.songs});
+
+  final List<SongEntity> songs;
+
+  @override
+  Widget build(BuildContext context) {
     return CustomScrollView(
       slivers: [
-        // 1. The Dynamic App Bar (Handles Gradient & Collapsing Title)
+        // 1. The Complex Header (Search + Title + Controls)
+        // 1. The Complex Header (Search + Title + Controls)
         SliverAppBar(
-          expandedHeight: 280.0,
+          expandedHeight: 290.0,
+          pinned: true,
           floating: false,
-          pinned: true, // This makes it stick to the top
-          backgroundColor: AppPallete.backgroundColor, // Black when collapsed
           elevation: 0,
+          backgroundColor: AppPallete.gradientTop,
 
-          // The Title that appears when collapsed
-          title: const Text(
-            "Local Songs",
-            style: TextStyle(
-              color: AppPallete.white,
-              fontWeight: FontWeight.bold,
+          leading: IconButton(
+            onPressed: () {
+              // Navigator.pop(context);
+            },
+            icon: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: Colors.white,
             ),
           ),
 
-          // The Background Gradient (FlexibleSpace)
-          flexibleSpace: FlexibleSpaceBar(
-            background: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    AppPallete.gradientTop, // Blue
-                    AppPallete.gradientBottom, // Black
-                  ],
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end, // Push content down
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Search Bar inside the gradient
-                    SongsSearchBar(),
-                    const SizedBox(height: 20),
+          // We use LayoutBuilder to access the scroll offset (constraints)
+          flexibleSpace: SafeArea(
+            child: LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints constraints) {
+                // Calculate the Collapse Factor
+                // 1.0 = Fully Expanded
+                // 0.0 = Fully Collapsed
+                var top = constraints.biggest.height;
+                var expandedHeight = 290.0;
+                var safePadding = MediaQuery.of(context).padding.top;
+                var toolbarHeight = kToolbarHeight + safePadding;
 
-                    // Big Title (Disappears as you scroll up due to FlexibleSpace logic)
-                    const Text(
-                      "Local Songs",
-                      style: TextStyle(
-                        color: AppPallete.white,
-                        fontSize: 32, // Bigger font for expanded state
-                        fontWeight: FontWeight.bold,
+                // Calculate t: 0.0 (Collapsed) -> 1.0 (Expanded)
+                // We clamp it to ensure it doesn't go below 0 or above 1
+                var t =
+                    ((top - toolbarHeight) / (expandedHeight - toolbarHeight))
+                        .clamp(0.0, 1.0);
+
+                return FlexibleSpaceBar(
+                  collapseMode: CollapseMode.pin,
+                  background: Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Color.fromARGB(255, 48, 56, 204), // Top Blue
+                          Color.fromARGB(255, 41, 48, 146), // Mid
+                          AppPallete.backgroundColor, // Bottom Black
+                        ],
+                        stops: [0.3, 0.6, 0.8],
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      "${songs.length} songs",
-                      style: const TextStyle(
-                        color: AppPallete.grey,
-                        fontSize: 14,
+                    child: SafeArea(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 60),
+                          // Search Bar (Fades out as we collapse)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                            ),
+                            child: Opacity(
+                              opacity: t, // Fades out: 1.0 -> 0.0
+                              child: const SongsSearchBar(),
+                            ),
+                          ),
+
+                          const Spacer(),
+
+                          // Controls Row (Fades out faster than the title)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                            ),
+                            child: Opacity(
+                              opacity: t > 0.2
+                                  ? 1.0
+                                  : t * 5, // Quick fade logic
+                              child: Row(
+                                children: [
+                                  // Download Icon
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                        color: Colors.white30,
+                                        width: 1.5,
+                                      ),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    padding: const EdgeInsets.all(4),
+                                    child: const Icon(
+                                      Icons.arrow_downward,
+                                      color: Colors.white,
+                                      size: 16,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  const Icon(
+                                    Icons.shuffle,
+                                    color: AppPallete.primaryGreen,
+                                    size: 28,
+                                  ),
+                                  const Spacer(),
+                                  // Play Button
+                                  Container(
+                                    height: 56,
+                                    width: 56,
+                                    decoration: const BoxDecoration(
+                                      color: AppPallete.primaryGreen,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: IconButton(
+                                      onPressed: () {
+                                        if (songs.isNotEmpty) {
+                                          context.read<MusicPlayerBloc>().add(
+                                            MusicPlayerEvent.initMusicQueue(
+                                              songs: songs,
+                                              currentIndex: 0,
+                                            ),
+                                          );
+                                        }
+                                      },
+                                      icon: const Icon(
+                                        Icons.play_arrow,
+                                        color: Colors.black,
+                                        size: 32,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 70),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 20),
+                  ),
 
-                    // Controls Row
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.download_for_offline_outlined,
-                              color: AppPallete.grey,
-                              size: 30,
-                            ),
-                            const SizedBox(width: 15),
-                            const Icon(
-                              Icons.shuffle,
-                              color: AppPallete.grey,
-                              size: 30,
-                            ),
-                          ],
-                        ),
-                        // Play Button
-                        Container(
-                          height: 50,
-                          width: 50,
-                          decoration: const BoxDecoration(
-                            color: AppPallete.primaryGreen,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.play_arrow,
-                            color: Colors.black,
-                            size: 30,
-                          ),
-                        ),
-                      ],
+                  // CUSTOM TITLE IMPLEMENTATION
+                  // We leave the standard 'title' null and use a Stack overlay
+                  titlePadding: EdgeInsets.zero,
+                  title: Padding(
+                    padding: EdgeInsets.only(
+                      bottom: 5,
+                      // Add extra left padding when expanded so it aligns with content,
+                      // but remove it when collapsed so it centers perfectly.
+                      left: 12 * t,
+                      right: 16 * t,
                     ),
-                    const SizedBox(height: 20),
-                  ],
-                ),
-              ),
+                    child: Align(
+                      // LERP: Interpolate between BottomLeft (Expanded) and Center (Collapsed)
+                      alignment: Alignment.lerp(
+                        Alignment.center,
+                        Alignment.bottomLeft,
+                        t,
+                      )!,
+                      child: Text(
+                        "Local Songs",
+                        style: TextStyle(
+                          color: AppPallete.white,
+                          fontWeight: FontWeight.bold,
+                          // Smoothly scale font size: 18 (Collapsed) <-> 32 (Expanded)
+                          fontSize: 18 + (0.5 * t),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
           ),
         ),
 
-        // 2. The List
+        // 2. The "Add to Playlist" Button (Part of the scrollable list)
+        // SliverToBoxAdapter(
+        //   child: Padding(
+        //     padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
+        //     child: Row(
+        //       children: [
+        //         Container(
+        //           height: 48,
+        //           width: 48,
+        //           decoration: BoxDecoration(
+        //             color: Colors.grey[900],
+        //             borderRadius: BorderRadius.circular(4),
+        //           ),
+        //           child: const Icon(Icons.add, color: Colors.white70, size: 28),
+        //         ),
+        //         const SizedBox(width: 16),
+        //         const Text(
+        //           "Add to this playlist",
+        //           style: TextStyle(
+        //             color: Colors.white,
+        //             fontSize: 16,
+        //             fontWeight: FontWeight.w500,
+        //           ),
+        //         ),
+        //       ],
+        //     ),
+        //   ),
+        // ),
+
+        // 3. The Song List
         SliverList(
           delegate: SliverChildBuilderDelegate((context, index) {
             final song = songs[index];
             return ListTile(
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
-                vertical: 4,
+                vertical: 0,
               ),
               leading: Container(
-                width: 50,
-                height: 50,
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
                   color: AppPallete.cardColor,
                   borderRadius: BorderRadius.circular(4),
@@ -375,6 +450,10 @@ class _SongListPageState extends State<SongListPage>
                     Icons.music_note,
                     color: AppPallete.grey,
                   ),
+                  artworkFit: BoxFit.cover,
+                  artworkBorder: BorderRadius.circular(4),
+                  artworkWidth: 48,
+                  artworkHeight: 48,
                 ),
               ),
               title: Text(
@@ -387,17 +466,42 @@ class _SongListPageState extends State<SongListPage>
                   fontSize: 16,
                 ),
               ),
-              subtitle: Text(
-                song.artist,
-                maxLines: 1,
-                style: const TextStyle(color: AppPallete.grey, fontSize: 13),
+              subtitle: Row(
+                children: [
+                  // Explicit Badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 1,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[400],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                    child: const Text(
+                      "E",
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 8,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      song.artist,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppPallete.grey,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              trailing: Text(
-                _formatDuration(
-                  song.duration.toInt(),
-                ), // Ensure duration is int
-                style: const TextStyle(color: AppPallete.grey, fontSize: 12),
-              ),
+              trailing: const Icon(Icons.more_vert, color: AppPallete.grey),
               onTap: () {
                 context.read<MusicPlayerBloc>().add(
                   MusicPlayerEvent.initMusicQueue(
@@ -410,17 +514,10 @@ class _SongListPageState extends State<SongListPage>
           }, childCount: songs.length),
         ),
 
-        // Bottom Padding
-        const SliverToBoxAdapter(child: SizedBox(height: 80)),
+        // Bottom Padding for MiniPlayer
+        const SliverToBoxAdapter(child: SizedBox(height: 100)),
       ],
     );
-  }
-
-  String _formatDuration(int milliseconds) {
-    final duration = Duration(milliseconds: milliseconds);
-    final minutes = duration.inMinutes;
-    final seconds = duration.inSeconds.remainder(60);
-    return '$minutes:${seconds.toString().padLeft(2, '0')}';
   }
 }
 
@@ -429,36 +526,52 @@ class SongsSearchBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 40,
-      decoration: BoxDecoration(
-        color: AppPallete.white.withValues(alpha: .1),
-        borderRadius: BorderRadius.circular(5),
-      ),
-      child: Row(
-        children: [
-          const SizedBox(width: 10),
-          const Icon(Icons.search, color: AppPallete.white),
-          const SizedBox(width: 10),
-          const Text(
-            "Find in local songs",
-            style: TextStyle(color: Colors.white70),
-          ),
-          const Spacer(),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            margin: const EdgeInsets.all(4),
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            height: 36,
             decoration: BoxDecoration(
-              color: AppPallete.white.withValues(alpha: .1),
+              color: Colors.white.withValues(alpha: .1),
               borderRadius: BorderRadius.circular(4),
             ),
-            child: const Text(
-              "Sort",
-              style: TextStyle(color: AppPallete.white, fontSize: 12),
+            child: Row(
+              children: [
+                const SizedBox(width: 10),
+                const Icon(Icons.search, color: Colors.white70, size: 20),
+                const SizedBox(width: 8),
+                const Text(
+                  "Find in Local Songs",
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
           ),
-        ],
-      ),
+        ),
+        const SizedBox(width: 12),
+        // Sort Button
+        Container(
+          height: 36,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: .1),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          alignment: Alignment.center,
+          child: const Text(
+            "Sort",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
