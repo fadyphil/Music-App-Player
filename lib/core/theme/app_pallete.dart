@@ -5,7 +5,12 @@ class AppPallete {
   static const Color backgroundColor = Color(
     0xFF121212,
   ); // Deep Dark Grey/Black
-  static const Color gradientTop = Color(0xFF3B4096); // The Blue top fade
+  static const Color gradientTop = Color.fromARGB(
+    255,
+    49,
+    55,
+    173,
+  ); // The Blue top fade
   static const Color gradientBottom = backgroundColor;
 
   // The Accents

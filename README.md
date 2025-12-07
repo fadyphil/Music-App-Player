@@ -1,3 +1,7 @@
+> 🚧 **Work in Progress**
+> This project is currently under active development. I am using it to strictly practice
+> **Clean Architecture** and **BLoC**. Some features may be incomplete.
+
 # music_player
 
 A new Flutter project.
