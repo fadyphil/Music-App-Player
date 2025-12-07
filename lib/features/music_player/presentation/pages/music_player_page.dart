@@ -44,7 +44,7 @@ class _MusicPlayerPageState extends State<MusicPlayerPage> {
 
         return AnimatedContainer(
           duration: const Duration(milliseconds: 600),
-          curve: Curves.easeOutQuart, // Physics-based smoothing
+          curve: Curves.easeOutQuart,
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
@@ -55,44 +55,44 @@ class _MusicPlayerPageState extends State<MusicPlayerPage> {
               ],
             ),
           ),
-          child: Scaffold(
-            // Transparent scaffold to allow gradient to show through
-            backgroundColor: Colors.transparent,
-            appBar: _buildAppBar(context),
-            // Use SafeArea to avoid overlap with status bar/notch, but keep gradient full screen
-            body: SafeArea(
-              bottom: false, // Allow bottom to go behind nav bar if needed
+          child: Material(
+            color: Colors.transparent,
+            child: SafeArea(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
                 child: Column(
                   children: [
-                    // Dynamic Spacer using Flex to adapt to screen height
+                    // 1. CUSTOM HEADER (Replaces AppBar)
+                    const SizedBox(height: 16),
+                    _buildCustomHeader(context),
+
+                    // Spacer to push artwork down slightly
                     const Spacer(flex: 1),
 
-                    // 1. ARTWORK (Visual Centerpiece)
+                    // 2. ARTWORK
                     _ArtworkDisplay(song: song),
 
                     const Spacer(flex: 1),
 
-                    // 2. META INFO (Title, Artist, Like)
+                    // 3. META INFO
                     _TrackInfoRow(song: song),
 
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 24),
 
-                    // 3. PROGRESS (Interactive Physics)
+                    // 4. PROGRESS
                     const _InterpolatedProgressBar(),
 
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 12),
 
-                    // 4. CONTROLS (Main Interaction)
+                    // 5. CONTROLS
                     const _PlayerControls(),
 
                     const Spacer(flex: 1),
 
-                    // 5. FOOTER (Secondary Actions)
+                    // 6. FOOTER
                     const _BottomActionRow(),
 
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 20),
                   ],
                 ),
               ),
@@ -100,6 +100,50 @@ class _MusicPlayerPageState extends State<MusicPlayerPage> {
           ),
         );
       },
+    );
+  }
+
+  // --- WIDGET: Custom Header ---
+  Widget _buildCustomHeader(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        IconButton(
+          onPressed: () => Navigator.of(context).pop(),
+          icon: const Icon(
+            Icons.keyboard_arrow_down,
+            size: 32,
+            color: Colors.white,
+          ),
+        ),
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Text(
+              "PLAYING FROM YOUR LIBRARY",
+              style: TextStyle(
+                fontSize: 10,
+                letterSpacing: 1.5,
+                color: Colors.white70,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            SizedBox(height: 2),
+            Text(
+              "Liked Songs",
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        IconButton(
+          onPressed: () {},
+          icon: const Icon(Icons.more_vert, size: 28, color: Colors.white),
+        ),
+      ],
     );
   }
 
@@ -117,79 +161,40 @@ class _MusicPlayerPageState extends State<MusicPlayerPage> {
       if (artBytes != null) {
         final PaletteGenerator palette =
             await PaletteGenerator.fromImageProvider(
-          MemoryImage(artBytes),
-          maximumColorCount: 5,
-        );
+              MemoryImage(artBytes),
+              maximumColorCount: 5,
+            );
         if (mounted) {
           setState(() {
-            // Prioritize dark muted/vibrant colors for Spotify-like look
-            Color? selected = palette.darkMutedColor?.color ??
-                palette.darkVibrantColor?.color;
+            // Prioritize colors that look good as a background
+            Color? selected =
+                palette.darkMutedColor?.color ??
+                palette.darkVibrantColor?.color ??
+                palette.mutedColor?.color ??
+                palette.dominantColor?.color;
 
-            if (selected == null && palette.dominantColor != null) {
-              final hsl = HSLColor.fromColor(palette.dominantColor!.color);
-              // Darken it if it's too light
-              selected =
-                  hsl.withLightness((hsl.lightness - 0.2).clamp(0.1, 0.5)).toColor();
+            if (selected != null) {
+              // Ensure it's not too light
+              final hsl = HSLColor.fromColor(selected);
+              if (hsl.lightness > 0.4) {
+                selected = hsl.withLightness(0.3).toColor();
+              }
+              _dominantColor = selected;
+            } else {
+              _dominantColor = null;
             }
-
-            _dominantColor = selected;
           });
         }
       } else {
         if (mounted) {
           setState(() {
-            _dominantColor = null; // Revert to default
+            _dominantColor = null;
           });
         }
       }
     } catch (e) {
       if (mounted) setState(() => _dominantColor = null);
     }
-  }
-
-  // --- WIDGET: Custom App Bar ---
-  PreferredSizeWidget _buildAppBar(BuildContext context) {
-    return AppBar(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      centerTitle: true,
-      leading: IconButton(
-        icon: const Icon(
-          Icons.keyboard_arrow_down,
-          size: 30,
-          color: Colors.white,
-        ),
-        onPressed: () => Navigator.of(context).pop(),
-      ),
-      title: Column(
-        children: const [
-          Text(
-            "PLAYING FROM YOUR LIBRARY",
-            style: TextStyle(
-              fontSize: 10,
-              letterSpacing: 1.5,
-              color: Colors.white70,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          Text(
-            "Liked Songs", // Dynamic context could go here
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.more_vert, color: Colors.white),
-          onPressed: () {}, // Context menu action
-        ),
-      ],
-    );
   }
 }
 
@@ -206,26 +211,28 @@ class _ArtworkDisplay extends StatelessWidget {
       aspectRatio: 1,
       child: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(
-            16,
-          ), // Rounder corners (Spotify style)
+          borderRadius: BorderRadius.circular(20), // Increased radius
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.4),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
+              color: Colors.black.withValues(alpha: 0.5), // Darker shadow
+              blurRadius: 40, // Softer spread
+              offset: const Offset(0, 20),
             ),
           ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           child: QueryArtworkWidget(
             id: song.id,
             type: ArtworkType.AUDIO,
             artworkFit: BoxFit.cover,
             nullArtworkWidget: Container(
               color: Colors.grey[900],
-              child: const Icon(Icons.music_note, size: 80, color: Colors.grey),
+              child: const Icon(
+                Icons.music_note,
+                size: 100,
+                color: Colors.grey,
+              ),
             ),
           ),
         ),
@@ -293,8 +300,8 @@ class _InterpolatedProgressBarState extends State<_InterpolatedProgressBar> {
         setState(() {
           _maxValue = state.duration.inSeconds.toDouble();
           // Sync with the source of truth if drift is significant (>1.5s) or paused
-          final diff =
-              (state.position.inSeconds.toDouble() - _currentValue).abs();
+          final diff = (state.position.inSeconds.toDouble() - _currentValue)
+              .abs();
           if (diff > 1.5 || !state.isPlaying) {
             _currentValue = state.position.inSeconds.toDouble();
           }
