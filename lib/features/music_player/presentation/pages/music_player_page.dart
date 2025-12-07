@@ -59,12 +59,12 @@ class _MusicPlayerPageState extends State<MusicPlayerPage> {
             color: Colors.transparent,
             child: SafeArea(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
                   children: [
                     // 1. CUSTOM HEADER (Replaces AppBar)
-                    const SizedBox(height: 16),
-                    _buildCustomHeader(context),
+                    const SizedBox(height: 32),
+                    CustomHeader(context: context),
 
                     // Spacer to push artwork down slightly
                     const Spacer(flex: 1),
@@ -104,48 +104,6 @@ class _MusicPlayerPageState extends State<MusicPlayerPage> {
   }
 
   // --- WIDGET: Custom Header ---
-  Widget _buildCustomHeader(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        IconButton(
-          onPressed: () => Navigator.of(context).pop(),
-          icon: const Icon(
-            Icons.keyboard_arrow_down,
-            size: 32,
-            color: Colors.white,
-          ),
-        ),
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          children: const [
-            Text(
-              "PLAYING FROM YOUR LIBRARY",
-              style: TextStyle(
-                fontSize: 10,
-                letterSpacing: 1.5,
-                color: Colors.white70,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            SizedBox(height: 2),
-            Text(
-              "Liked Songs",
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-        IconButton(
-          onPressed: () {},
-          icon: const Icon(Icons.more_vert, size: 28, color: Colors.white),
-        ),
-      ],
-    );
-  }
 
   // --- LOGIC: Dynamic Color Extraction ---
   Future<void> _updatePalette(int songId) async {
@@ -198,6 +156,56 @@ class _MusicPlayerPageState extends State<MusicPlayerPage> {
   }
 }
 
+class CustomHeader extends StatelessWidget {
+  const CustomHeader({super.key, required this.context});
+
+  final BuildContext context;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        IconButton(
+          onPressed: () => Navigator.of(context).pop(),
+          icon: const Icon(
+            Icons.keyboard_arrow_down,
+            size: 24,
+            color: Colors.white,
+          ),
+        ),
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Text(
+              "PLAYING FROM YOUR LIBRARY",
+              style: TextStyle(
+                fontSize: 10,
+                color: Colors.white70,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            SizedBox(height: 2),
+            Text(
+              "Liked Songs",
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+
+        IconButton(
+          onPressed: () {},
+          icon: const Icon(Icons.more_vert, size: 24, color: Colors.white),
+        ),
+      ],
+    );
+  }
+}
+
 /// ----------------------------------------------------------------------------
 /// WIDGET: Artwork Display
 /// ----------------------------------------------------------------------------
@@ -211,7 +219,7 @@ class _ArtworkDisplay extends StatelessWidget {
       aspectRatio: 1,
       child: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20), // Increased radius
+          borderRadius: BorderRadius.circular(8), // Increased radius
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.5), // Darker shadow
@@ -220,21 +228,15 @@ class _ArtworkDisplay extends StatelessWidget {
             ),
           ],
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: QueryArtworkWidget(
-            id: song.id,
-            type: ArtworkType.AUDIO,
-            artworkFit: BoxFit.cover,
-            nullArtworkWidget: Container(
-              color: Colors.grey[900],
-              child: const Icon(
-                Icons.music_note,
-                size: 100,
-                color: Colors.grey,
-              ),
-            ),
+        child: QueryArtworkWidget(
+          id: song.id,
+          type: ArtworkType.AUDIO,
+          artworkFit: BoxFit.cover,
+          nullArtworkWidget: Container(
+            color: Colors.grey[900],
+            child: const Icon(Icons.music_note, size: 100, color: Colors.grey),
           ),
+          artworkBorder: BorderRadius.circular(8),
         ),
       ),
     );
