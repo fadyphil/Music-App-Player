@@ -5,21 +5,35 @@ import 'package:just_audio/just_audio.dart';
 // It is the Single Source of Truth for the OS.
 class MusicPlayerHandler extends BaseAudioHandler
     with QueueHandler, SeekHandler {
-  final AudioPlayer _player = AudioPlayer();
+  final AudioPlayer _player;
+  
+  // The playlist that just_audio will play sequentially
+  final ConcatenatingAudioSource _playlist = ConcatenatingAudioSource(children: []);
 
-  MusicPlayerHandler() {
+  MusicPlayerHandler({AudioPlayer? player}) : _player = player ?? AudioPlayer() {
     _initPlayerListeners();
+    // We set the source immediately, even if empty, so the player is ready
+    _player.setAudioSource(_playlist);
   }
 
   // 1. Initialize Listeners: Sync just_audio events -> audio_service State
   void _initPlayerListeners() {
     // Broadcast the current song details to the Lock Screen / Notification
     _player.sequenceStateStream.listen((sequenceState) {
-      // if (sequenceState == null) return;
+      if (sequenceState == null) return;
+      
+      // Update Current Media Item
       final currentItem = sequenceState.currentSource;
       if (currentItem != null) {
         final tag = currentItem.tag as MediaItem;
         mediaItem.add(tag);
+      }
+      
+      // Update Queue (Optional: if we modify queue dynamically)
+      final sequence = sequenceState.sequence;
+      if (sequence.isNotEmpty) {
+        final items = sequence.map((source) => source.tag as MediaItem).toList();
+        queue.add(items);
       }
     });
 
@@ -39,7 +53,7 @@ class MusicPlayerHandler extends BaseAudioHandler
             MediaAction.seekBackward,
           },
           androidCompactActionIndices: const [0, 1, 2],
-          processingState: const {
+          processingState: {
             ProcessingState.idle: AudioProcessingState.idle,
             ProcessingState.loading: AudioProcessingState.loading,
             ProcessingState.buffering: AudioProcessingState.buffering,
@@ -54,6 +68,13 @@ class MusicPlayerHandler extends BaseAudioHandler
         ),
       );
     });
+
+    // CRITICAL: just_audio's playbackEventStream doesn't fire continuously.
+    // We need to bridge the position stream to AudioService so the seek bar works in UI.
+    // However, AudioService calculates position based on 'updatePosition' + 'speed' * (now - updateTime).
+    // So we just need to ensure we emit a state whenever Play/Pause/Seek happens.
+    // _player.playbackEventStream handles this for us. 
+    // BUT, we might need to be explicit about the 'playing' state.
   }
 
   // 2. Playback Methods (Called by your UI/Repository)
@@ -70,7 +91,76 @@ class MusicPlayerHandler extends BaseAudioHandler
   @override
   Future<void> stop() => _player.stop();
 
-  // 3. Custom Method to Load a Song (Used by your Repository)
+  @override
+  Future<void> skipToNext() => _player.seekToNext();
+
+  @override
+  Future<void> skipToPrevious() => _player.seekToPrevious();
+
+  @override
+  Future<void> setShuffleMode(AudioServiceShuffleMode shuffleMode) async {
+    final enabled = shuffleMode == AudioServiceShuffleMode.all;
+    if (enabled) {
+      await _player.shuffle();
+    }
+    await _player.setShuffleModeEnabled(enabled);
+  }
+
+  @override
+  Future<void> setRepeatMode(AudioServiceRepeatMode repeatMode) async {
+    final loopMode = {
+      AudioServiceRepeatMode.none: LoopMode.off,
+      AudioServiceRepeatMode.one: LoopMode.one,
+      AudioServiceRepeatMode.all: LoopMode.all,
+      AudioServiceRepeatMode.group: LoopMode.all,
+    }[repeatMode]!;
+    await _player.setLoopMode(loopMode);
+  }
+
+  // 3. Custom Queue Management (The "True Background" Logic)
+  
+  /// Replaces the entire queue and starts playing from [initialIndex]
+  Future<void> setQueueItems({
+    required List<MediaItem> items,
+    required int initialIndex,
+  }) async {
+    try {
+      // 1. Convert MediaItems to AudioSources
+      final audioSources = items.map((item) {
+        return AudioSource.file(
+          item.extras!['url'] as String,
+          tag: item, // Crucial: Attach metadata to the source
+        );
+      }).toList();
+
+      // 2. Clear and Rebuild Playlist
+      // We explicitly clear to avoid "concatenating" to old queues
+      await _playlist.clear(); 
+      await _playlist.addAll(audioSources);
+
+      // 3. Set the player to this playlist and jump to index
+      // Note: We already set _playlist in constructor, but calling setAudioSource again 
+      // ensures state reset if needed, or we can just seek.
+      // However, just_audio recommends initializing source once if possible.
+      // Since we modified _playlist (which is the source), we might just need to seek.
+      // But dealing with race conditions on 'clear' + 'add' while playing can be tricky.
+      // Safe approach:
+      await _player.setAudioSource(_playlist, initialIndex: initialIndex);
+      
+      // 4. Play
+      await _player.play();
+      
+      // 5. Update AudioService Queue (For UI to see)
+      queue.add(items);
+      mediaItem.add(items[initialIndex]);
+      
+    } catch (e) {
+      print("Error setting queue: $e");
+      // TODO: Add robust error handling (e.g., broadcasting error state)
+    }
+  }
+
+  // Legacy/Single Song Fallback (Optional)
   Future<void> playSong({
     required String uri,
     required String title,
@@ -78,26 +168,14 @@ class MusicPlayerHandler extends BaseAudioHandler
     required String id,
     required String artUri,
   }) async {
-    // Create the MediaItem (Metadata for the OS)
     final item = MediaItem(
       id: id,
       album: "Local Music",
       title: title,
       artist: artist,
       artUri: Uri.parse(artUri),
-      extras: {'url': uri}, // Store the path in extras
+      extras: {'url': uri},
     );
-
-    // Tell audio_service this is the current item
-    mediaItem.add(item);
-
-    // Tell just_audio to load this file
-    // Note: We attach the MediaItem as a 'tag' so we can retrieve it later
-    try {
-      await _player.setAudioSource(AudioSource.file(uri, tag: item));
-      await _player.play();
-    } catch (e) {
-      print("Error loading audio source: $e");
-    }
+    await setQueueItems(items: [item], initialIndex: 0);
   }
 }

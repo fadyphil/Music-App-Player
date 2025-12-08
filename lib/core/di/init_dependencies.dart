@@ -25,7 +25,7 @@ Future<void> initDependencies() async {
   serviceLocator.registerLazySingleton(() => OnAudioQuery());
   serviceLocator.registerLazySingleton(() => AudioPlayer());
   final audioHandler = await AudioService.init(
-    builder: () => MusicPlayerHandler(),
+    builder: () => MusicPlayerHandler(player: serviceLocator()),
     config: const AudioServiceConfig(
       androidNotificationChannelId: 'com.example.music_player.channel.audio',
       androidNotificationChannelName: 'Music Playback',

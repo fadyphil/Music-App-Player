@@ -66,6 +66,7 @@ dev_dependencies:
   build_runner: ^2.10.4
   flutter_launcher_icons: ^0.14.4
   flutter_native_splash: ^2.4.7
+  mocktail: ^1.0.4
 dependency_overrides:
   on_audio_query_android:
     git:
