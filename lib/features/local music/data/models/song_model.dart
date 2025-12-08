@@ -8,6 +8,7 @@ class SongMapper {
       title: song.title,
       artist: song.artist ?? 'Unknown Artist',
       album: song.album ?? 'Unknown Album',
+      albumId: song.albumId,
       path: song.data,
       duration: (song.duration ?? 0.0).toDouble(),
       size: song.size,

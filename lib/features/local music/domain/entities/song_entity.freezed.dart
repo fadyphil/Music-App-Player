@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$SongEntity {
 
- int get id; String get title; String get artist; String get album; String get path; double get duration; int get size;
+ int get id; String get title; String get artist; String get album; int? get albumId; String get path; double get duration; int get size;
 /// Create a copy of SongEntity
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $SongEntityCopyWith<SongEntity> get copyWith => _$SongEntityCopyWithImpl<SongEnt
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SongEntity&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.artist, artist) || other.artist == artist)&&(identical(other.album, album) || other.album == album)&&(identical(other.path, path) || other.path == path)&&(identical(other.duration, duration) || other.duration == duration)&&(identical(other.size, size) || other.size == size));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SongEntity&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.artist, artist) || other.artist == artist)&&(identical(other.album, album) || other.album == album)&&(identical(other.albumId, albumId) || other.albumId == albumId)&&(identical(other.path, path) || other.path == path)&&(identical(other.duration, duration) || other.duration == duration)&&(identical(other.size, size) || other.size == size));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,title,artist,album,path,duration,size);
+int get hashCode => Object.hash(runtimeType,id,title,artist,album,albumId,path,duration,size);
 
 @override
 String toString() {
-  return 'SongEntity(id: $id, title: $title, artist: $artist, album: $album, path: $path, duration: $duration, size: $size)';
+  return 'SongEntity(id: $id, title: $title, artist: $artist, album: $album, albumId: $albumId, path: $path, duration: $duration, size: $size)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $SongEntityCopyWith<$Res>  {
   factory $SongEntityCopyWith(SongEntity value, $Res Function(SongEntity) _then) = _$SongEntityCopyWithImpl;
 @useResult
 $Res call({
- int id, String title, String artist, String album, String path, double duration, int size
+ int id, String title, String artist, String album, int? albumId, String path, double duration, int size
 });
 
 
@@ -62,13 +62,14 @@ class _$SongEntityCopyWithImpl<$Res>
 
 /// Create a copy of SongEntity
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? artist = null,Object? album = null,Object? path = null,Object? duration = null,Object? size = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? artist = null,Object? album = null,Object? albumId = freezed,Object? path = null,Object? duration = null,Object? size = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String,artist: null == artist ? _self.artist : artist // ignore: cast_nullable_to_non_nullable
 as String,album: null == album ? _self.album : album // ignore: cast_nullable_to_non_nullable
-as String,path: null == path ? _self.path : path // ignore: cast_nullable_to_non_nullable
+as String,albumId: freezed == albumId ? _self.albumId : albumId // ignore: cast_nullable_to_non_nullable
+as int?,path: null == path ? _self.path : path // ignore: cast_nullable_to_non_nullable
 as String,duration: null == duration ? _self.duration : duration // ignore: cast_nullable_to_non_nullable
 as double,size: null == size ? _self.size : size // ignore: cast_nullable_to_non_nullable
 as int,
@@ -156,10 +157,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  String title,  String artist,  String album,  String path,  double duration,  int size)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  String title,  String artist,  String album,  int? albumId,  String path,  double duration,  int size)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SongEntity() when $default != null:
-return $default(_that.id,_that.title,_that.artist,_that.album,_that.path,_that.duration,_that.size);case _:
+return $default(_that.id,_that.title,_that.artist,_that.album,_that.albumId,_that.path,_that.duration,_that.size);case _:
   return orElse();
 
 }
@@ -177,10 +178,10 @@ return $default(_that.id,_that.title,_that.artist,_that.album,_that.path,_that.d
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  String title,  String artist,  String album,  String path,  double duration,  int size)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  String title,  String artist,  String album,  int? albumId,  String path,  double duration,  int size)  $default,) {final _that = this;
 switch (_that) {
 case _SongEntity():
-return $default(_that.id,_that.title,_that.artist,_that.album,_that.path,_that.duration,_that.size);case _:
+return $default(_that.id,_that.title,_that.artist,_that.album,_that.albumId,_that.path,_that.duration,_that.size);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -197,10 +198,10 @@ return $default(_that.id,_that.title,_that.artist,_that.album,_that.path,_that.d
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  String title,  String artist,  String album,  String path,  double duration,  int size)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  String title,  String artist,  String album,  int? albumId,  String path,  double duration,  int size)?  $default,) {final _that = this;
 switch (_that) {
 case _SongEntity() when $default != null:
-return $default(_that.id,_that.title,_that.artist,_that.album,_that.path,_that.duration,_that.size);case _:
+return $default(_that.id,_that.title,_that.artist,_that.album,_that.albumId,_that.path,_that.duration,_that.size);case _:
   return null;
 
 }
@@ -212,13 +213,14 @@ return $default(_that.id,_that.title,_that.artist,_that.album,_that.path,_that.d
 
 
 class _SongEntity implements SongEntity {
-  const _SongEntity({required this.id, required this.title, required this.artist, required this.album, required this.path, required this.duration, required this.size});
+  const _SongEntity({required this.id, required this.title, required this.artist, required this.album, required this.albumId, required this.path, required this.duration, required this.size});
   
 
 @override final  int id;
 @override final  String title;
 @override final  String artist;
 @override final  String album;
+@override final  int? albumId;
 @override final  String path;
 @override final  double duration;
 @override final  int size;
@@ -233,16 +235,16 @@ _$SongEntityCopyWith<_SongEntity> get copyWith => __$SongEntityCopyWithImpl<_Son
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SongEntity&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.artist, artist) || other.artist == artist)&&(identical(other.album, album) || other.album == album)&&(identical(other.path, path) || other.path == path)&&(identical(other.duration, duration) || other.duration == duration)&&(identical(other.size, size) || other.size == size));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SongEntity&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.artist, artist) || other.artist == artist)&&(identical(other.album, album) || other.album == album)&&(identical(other.albumId, albumId) || other.albumId == albumId)&&(identical(other.path, path) || other.path == path)&&(identical(other.duration, duration) || other.duration == duration)&&(identical(other.size, size) || other.size == size));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,title,artist,album,path,duration,size);
+int get hashCode => Object.hash(runtimeType,id,title,artist,album,albumId,path,duration,size);
 
 @override
 String toString() {
-  return 'SongEntity(id: $id, title: $title, artist: $artist, album: $album, path: $path, duration: $duration, size: $size)';
+  return 'SongEntity(id: $id, title: $title, artist: $artist, album: $album, albumId: $albumId, path: $path, duration: $duration, size: $size)';
 }
 
 
@@ -253,7 +255,7 @@ abstract mixin class _$SongEntityCopyWith<$Res> implements $SongEntityCopyWith<$
   factory _$SongEntityCopyWith(_SongEntity value, $Res Function(_SongEntity) _then) = __$SongEntityCopyWithImpl;
 @override @useResult
 $Res call({
- int id, String title, String artist, String album, String path, double duration, int size
+ int id, String title, String artist, String album, int? albumId, String path, double duration, int size
 });
 
 
@@ -270,13 +272,14 @@ class __$SongEntityCopyWithImpl<$Res>
 
 /// Create a copy of SongEntity
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? artist = null,Object? album = null,Object? path = null,Object? duration = null,Object? size = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? artist = null,Object? album = null,Object? albumId = freezed,Object? path = null,Object? duration = null,Object? size = null,}) {
   return _then(_SongEntity(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String,artist: null == artist ? _self.artist : artist // ignore: cast_nullable_to_non_nullable
 as String,album: null == album ? _self.album : album // ignore: cast_nullable_to_non_nullable
-as String,path: null == path ? _self.path : path // ignore: cast_nullable_to_non_nullable
+as String,albumId: freezed == albumId ? _self.albumId : albumId // ignore: cast_nullable_to_non_nullable
+as int?,path: null == path ? _self.path : path // ignore: cast_nullable_to_non_nullable
 as String,duration: null == duration ? _self.duration : duration // ignore: cast_nullable_to_non_nullable
 as double,size: null == size ? _self.size : size // ignore: cast_nullable_to_non_nullable
 as int,
