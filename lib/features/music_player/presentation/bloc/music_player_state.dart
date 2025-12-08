@@ -14,7 +14,7 @@ abstract class MusicPlayerState with _$MusicPlayerState {
     @Default([]) List<SongEntity> queue,
     @Default(0) int currentIndex,
     @Default(false) bool isShuffling,
-    @Default(false) bool isLooping,
+    @Default(0) int loopMode, // 0: Off, 1: All, 2: One
     @Default(false) bool isPlaylistEnd,
     @Default(false) bool isLoading,
     @Default(false) bool isPlayerReady,

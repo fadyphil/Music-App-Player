@@ -11,6 +11,9 @@ class MusicPlayerBloc extends Bloc<MusicPlayerEvent, MusicPlayerState> {
   StreamSubscription? _durationSubscription;
   StreamSubscription? _playerStateSubscription;
   StreamSubscription? _completionSubscription;
+  StreamSubscription? _currentSongSubscription;
+  StreamSubscription? _shuffleSubscription;
+  StreamSubscription? _loopSubscription;
 
   MusicPlayerBloc(this._audioRepository) : super(const MusicPlayerState()) {
     // 1. Setup Listeners
@@ -27,35 +30,44 @@ class MusicPlayerBloc extends Bloc<MusicPlayerEvent, MusicPlayerState> {
     ) {
       add(MusicPlayerEvent.updatePlayerState(isPlaying));
     });
+    
+    _shuffleSubscription = _audioRepository.isShuffleModeEnabledStream.listen((enabled) {
+      add(MusicPlayerEvent.updateShuffleState(enabled));
+    });
+
+    _loopSubscription = _audioRepository.loopModeStream.listen((mode) {
+      add(MusicPlayerEvent.updateLoopState(mode));
+    });
+
+    // Listen to the Operating System / Audio Service for the current song
+    _currentSongSubscription = _audioRepository.currentSongStream.listen((song) {
+      if (song != null) {
+        add(MusicPlayerEvent.updateCurrentSong(song));
+      }
+    });
 
     _completionSubscription = _audioRepository.playerCompleteStream.listen((_) {
       add(const MusicPlayerEvent.songFinished());
     });
 
-    // 2. Handle Events using .map()
-    // We register one generic handler, then map inside it.
+    // 2. Handle Events
     on<MusicPlayerEvent>((event, emit) async {
       await event.map(
         initMusicQueue: (e) async {
-          final song = e.songs[e.currentIndex];
+          // Optimistic update
           emit(
             state.copyWith(
               queue: e.songs,
               currentIndex: e.currentIndex,
-              currentSong: song,
+              currentSong: e.songs[e.currentIndex],
               isPlaying: true,
             ),
           );
-          await _audioRepository.playSong(
-            song.path,
-            song.title,
-            song.artist,
-            song.id.toString(),
-            song.album,
-          );
+          // Delegate to Handler
+          await _audioRepository.setQueue(e.songs, e.currentIndex);
         },
         playSong: (e) async {
-          // Update state immediately for UI responsiveness
+          // Play Single Song (Legacy/Specific use case)
           emit(state.copyWith(currentSong: e.song, isPlaying: true));
           await _audioRepository.playSong(
             e.song.path,
@@ -66,52 +78,17 @@ class MusicPlayerBloc extends Bloc<MusicPlayerEvent, MusicPlayerState> {
           );
         },
         playNextSong: (_) async {
-          if (state.queue.isEmpty) return;
-          if (state.currentIndex < state.queue.length - 1) {
-            final nextIndex = state.currentIndex + 1;
-            final nextSong = state.queue[nextIndex];
-            emit(
-              state.copyWith(
-                currentIndex: nextIndex,
-                currentSong: nextSong,
-                isPlaying: true,
-              ),
-            );
-            await _audioRepository.playSong(
-              nextSong.path,
-              nextSong.title,
-              nextSong.artist,
-              nextSong.id.toString(),
-              nextSong.album,
-            );
-          }
+           // Delegate to Handler
+           await _audioRepository.skipToNext();
         },
         playPreviousSong: (_) async {
-          if (state.position.inSeconds > 3) {
-            await _audioRepository.seek(Duration.zero);
-          } else {
-            if (state.currentIndex > 0) {
-              final prevIndex = state.currentIndex - 1;
-              final prevSong = state.queue[prevIndex];
-              emit(
-                state.copyWith(
-                  currentIndex: prevIndex,
-                  currentSong: prevSong,
-                  isPlaying: true,
-                ),
-              );
-              await _audioRepository.playSong(
-                prevSong.path,
-                prevSong.title,
-                prevSong.artist,
-                prevSong.id.toString(),
-                prevSong.album,
-              );
-            }
-          }
+           // Delegate to Handler
+           await _audioRepository.skipToPrevious();
         },
         songFinished: (_) async {
-          add(const MusicPlayerEvent.playNextSong());
+          // ConcatenatingAudioSource handles song transitions.
+          // This event now only signifies the END of the entire playlist.
+          emit(state.copyWith(isPlaying: false, isPlaylistEnd: true));
         },
         pause: (_) async {
           await _audioRepository.pause();
@@ -119,13 +96,23 @@ class MusicPlayerBloc extends Bloc<MusicPlayerEvent, MusicPlayerState> {
         resume: (_) async {
           await _audioRepository.resume();
         },
-        seek: (e) async {
+        toggleShuffle: (_) async {
+          final newValue = !state.isShuffling;
           // Optimistic update
+          emit(state.copyWith(isShuffling: newValue));
+          await _audioRepository.setShuffleMode(newValue);
+        },
+        cycleLoopMode: (_) async {
+          final nextMode = (state.loopMode + 1) % 3;
+           // Optimistic update
+          emit(state.copyWith(loopMode: nextMode));
+          await _audioRepository.setRepeatMode(nextMode);
+        },
+        seek: (e) async {
           emit(state.copyWith(position: e.position));
           await _audioRepository.seek(e.position);
         },
         updatePosition: (e) async {
-          // These are synchronous state updates, no async work needed
           emit(state.copyWith(position: e.position));
         },
         updateDuration: (e) async {
@@ -133,6 +120,22 @@ class MusicPlayerBloc extends Bloc<MusicPlayerEvent, MusicPlayerState> {
         },
         updatePlayerState: (e) async {
           emit(state.copyWith(isPlaying: e.isPlaying));
+        },
+        updateShuffleState: (e) async {
+          emit(state.copyWith(isShuffling: e.isShuffleModeEnabled));
+        },
+        updateLoopState: (e) async {
+          emit(state.copyWith(loopMode: e.loopMode));
+        },
+        updateCurrentSong: (e) async {
+           // Try to match the incoming song (from OS) with our full-detail queue
+           final index = state.queue.indexWhere((s) => s.id == e.song.id);
+           final fullSong = index != -1 ? state.queue[index] : e.song;
+           
+           emit(state.copyWith(
+             currentSong: fullSong,
+             currentIndex: index != -1 ? index : state.currentIndex,
+           ));
         },
       );
     });
@@ -144,6 +147,9 @@ class MusicPlayerBloc extends Bloc<MusicPlayerEvent, MusicPlayerState> {
     _durationSubscription?.cancel();
     _playerStateSubscription?.cancel();
     _completionSubscription?.cancel();
+    _currentSongSubscription?.cancel();
+    _shuffleSubscription?.cancel();
+    _loopSubscription?.cancel();
     return super.close();
   }
 }
