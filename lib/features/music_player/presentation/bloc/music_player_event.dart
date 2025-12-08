@@ -18,6 +18,9 @@ class MusicPlayerEvent with _$MusicPlayerEvent {
   const factory MusicPlayerEvent.seek(Duration position) = _Seek;
   const factory MusicPlayerEvent.playPreviousSong() = _PreviousSong;
   const factory MusicPlayerEvent.playNextSong() = _NextSong;
+  
+  const factory MusicPlayerEvent.toggleShuffle() = _ToggleShuffle;
+  const factory MusicPlayerEvent.cycleLoopMode() = _CycleLoopMode;
 
   // Internal System Events (Triggered by Streams)
   const factory MusicPlayerEvent.updatePosition(Duration position) =
@@ -26,6 +29,12 @@ class MusicPlayerEvent with _$MusicPlayerEvent {
       _UpdateDuration;
   const factory MusicPlayerEvent.updatePlayerState(bool isPlaying) =
       _UpdatePlayerState;
+  const factory MusicPlayerEvent.updateShuffleState(bool isShuffleModeEnabled) =
+      _UpdateShuffleState;
+  const factory MusicPlayerEvent.updateLoopState(int loopMode) =
+      _UpdateLoopState;
+  const factory MusicPlayerEvent.updateCurrentSong(SongEntity song) =
+      _UpdateCurrentSong;
 
   const factory MusicPlayerEvent.songFinished() = _SongFinished;
 }

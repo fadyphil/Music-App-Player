@@ -1,5 +1,7 @@
+import 'package:audio_service/audio_service.dart';
 import 'package:get_it/get_it.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:music_player/features/background-notification-feature/data/datasources/audio_handler.dart';
 import 'package:music_player/features/local%20music/data/datasource/local_music_datasource.dart';
 import 'package:music_player/features/local%20music/data/repositories/music_repository_impl.dart';
 import 'package:music_player/features/local%20music/domain/repositories/music_repository.dart';
@@ -21,6 +23,17 @@ Future<void> initDependencies() async {
   // 1. External (Third Party Libraries)
   // =========================================================
   serviceLocator.registerLazySingleton(() => OnAudioQuery());
+  serviceLocator.registerLazySingleton(() => AudioPlayer());
+  final audioHandler = await AudioService.init(
+    builder: () => MusicPlayerHandler(player: serviceLocator()),
+    config: const AudioServiceConfig(
+      androidNotificationChannelId: 'com.example.music_player.channel.audio',
+      androidNotificationChannelName: 'Music Playback',
+      androidNotificationOngoing: true,
+    ),
+  );
+
+  serviceLocator.registerSingleton<AudioHandler>(audioHandler);
 
   // =========================================================
   // 2. Data Layer
@@ -53,13 +66,9 @@ Future<void> initDependencies() async {
   // =========================================================
   // FEATURE: MUSIC PLAYER
   // =========================================================
-
-  // 1. External: The actual player engine
-  serviceLocator.registerLazySingleton(() => AudioPlayer());
-
   // 2. Repository
   serviceLocator.registerLazySingleton<AudioPlayerRepository>(
-    () => AudioPlayerRepositoryImpl(serviceLocator()),
+    () => AudioPlayerRepositoryImpl(serviceLocator<AudioHandler>()),
   );
 
   serviceLocator.registerLazySingleton(() => MusicPlayerBloc(serviceLocator()));

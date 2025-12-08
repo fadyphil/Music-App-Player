@@ -48,6 +48,10 @@ dependencies:
   get_it: ^9.1.1
   just_audio: ^0.10.5
   audio_service: ^0.18.18
+  device_info_plus: ^12.3.0
+  flutter_animate: ^4.5.2
+  #flutter_launcher_icons: ^0.14.4
+  #flutter_native_splash: ^2.4.7
 
 dev_dependencies:
   flutter_test:
@@ -60,6 +64,9 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
   build_runner: ^2.10.4
+  flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.7
+  mocktail: ^1.0.4
 dependency_overrides:
   on_audio_query_android:
     git:
@@ -106,3 +113,20 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+flutter_launcher_icons:
+  android: "launcher_icon"
+  iOS: true
+  image_path: "assets/images/logo.png"
+  min_sdk_android: 21 # Best practice for modern apps
+  adaptive_icon_background: "#121212" # Matches your dark theme
+  adaptive_icon_foreground: "assets/images/logo.png"
+
+flutter_native_splash:
+  color: "#121212" # Your app's background color (Deep Dark)
+  image: "assets/images/logo.png"
+  fullscreen: true
+
+  # Android 12+ specific (The icon in the circle)
+  android_12:
+    image: "assets/images/logo.png"
+    icon_background_color: "#121212"

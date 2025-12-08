@@ -87,7 +87,7 @@ class _ArtworkAndTitle extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.5),
+                      color: Colors.black.withValues(alpha: .5),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),
@@ -212,58 +212,94 @@ class _PlayerControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocSelector<MusicPlayerBloc, MusicPlayerState, bool>(
-      selector: (state) => state.isPlaying,
-      builder: (context, isPlaying) {
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            IconButton(
-              icon: const Icon(
-                Icons.skip_previous,
-                size: 36,
-                color: AppPallete.white,
-              ),
-              onPressed: () {
-                context.read<MusicPlayerBloc>().add(
-                  const MusicPlayerEvent.playPreviousSong(),
-                );
-              },
-            ),
-            const SizedBox(width: 20),
-            FloatingActionButton(
-              heroTag: 'playPauseBtn', // Unique tag to avoid conflicts
-              backgroundColor: AppPallete.primaryGreen,
-              onPressed: () {
-                final bloc = context.read<MusicPlayerBloc>();
-                if (isPlaying) {
-                  bloc.add(const MusicPlayerEvent.pause());
-                } else {
-                  bloc.add(const MusicPlayerEvent.resume());
-                }
-              },
-              child: Icon(
-                isPlaying ? Icons.pause : Icons.play_arrow,
-                color: Colors.black,
-                size: 32,
-              ),
-            ),
-            const SizedBox(width: 20),
-            IconButton(
-              icon: const Icon(
-                Icons.skip_next,
-                size: 36,
-                color: AppPallete.white,
-              ),
-              onPressed: () {
-                context.read<MusicPlayerBloc>().add(
-                  const MusicPlayerEvent.playNextSong(),
-                );
-              },
-            ),
-          ],
-        );
-      },
+    return Column(
+      children: [
+        // Main Transport
+        BlocBuilder<MusicPlayerBloc, MusicPlayerState>(
+          builder: (context, state) {
+            final isPlaying = state.isPlaying;
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  icon: const Icon(
+                    Icons.skip_previous,
+                    size: 36,
+                    color: AppPallete.white,
+                  ),
+                  onPressed: () {
+                    context.read<MusicPlayerBloc>().add(
+                      const MusicPlayerEvent.playPreviousSong(),
+                    );
+                  },
+                ),
+                const SizedBox(width: 20),
+                FloatingActionButton(
+                  heroTag: 'playPauseBtn', // Unique tag to avoid conflicts
+                  backgroundColor: AppPallete.primaryGreen,
+                  onPressed: () {
+                    final bloc = context.read<MusicPlayerBloc>();
+                    if (isPlaying) {
+                      bloc.add(const MusicPlayerEvent.pause());
+                    } else {
+                      bloc.add(const MusicPlayerEvent.resume());
+                    }
+                  },
+                  child: Icon(
+                    isPlaying ? Icons.pause : Icons.play_arrow,
+                    color: Colors.black,
+                    size: 32,
+                  ),
+                ),
+                const SizedBox(width: 20),
+                IconButton(
+                  icon: const Icon(
+                    Icons.skip_next,
+                    size: 36,
+                    color: AppPallete.white,
+                  ),
+                  onPressed: () {
+                    context.read<MusicPlayerBloc>().add(
+                      const MusicPlayerEvent.playNextSong(),
+                    );
+                  },
+                ),
+              ],
+            );
+          },
+        ),
+        const SizedBox(height: 24),
+        // Secondary Controls (Shuffle/Loop)
+        BlocBuilder<MusicPlayerBloc, MusicPlayerState>(
+          builder: (context, state) {
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                 IconButton(
+                  icon: Icon(
+                    Icons.shuffle,
+                    color: state.isShuffling ? AppPallete.primaryGreen : AppPallete.grey,
+                  ),
+                  onPressed: () {
+                     context.read<MusicPlayerBloc>().add(const MusicPlayerEvent.toggleShuffle());
+                  },
+                ),
+                IconButton(
+                  icon: Icon(
+                    state.loopMode == 0 
+                      ? Icons.repeat 
+                      : (state.loopMode == 2 ? Icons.repeat_one : Icons.repeat),
+                    color: state.loopMode > 0 ? AppPallete.primaryGreen : AppPallete.grey,
+                  ),
+                  onPressed: () {
+                     context.read<MusicPlayerBloc>().add(const MusicPlayerEvent.cycleLoopMode());
+                  },
+                ),
+              ],
+            );
+          },
+        )
+      ],
     );
   }
 }
