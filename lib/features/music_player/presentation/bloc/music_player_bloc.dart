@@ -46,12 +46,24 @@ class MusicPlayerBloc extends Bloc<MusicPlayerEvent, MusicPlayerState> {
               isPlaying: true,
             ),
           );
-          await _audioRepository.playSong(song.path);
+          await _audioRepository.playSong(
+            song.path,
+            song.title,
+            song.artist,
+            song.id.toString(),
+            song.album,
+          );
         },
         playSong: (e) async {
           // Update state immediately for UI responsiveness
           emit(state.copyWith(currentSong: e.song, isPlaying: true));
-          await _audioRepository.playSong(e.song.path);
+          await _audioRepository.playSong(
+            e.song.path,
+            e.song.title,
+            e.song.artist,
+            e.song.id.toString(),
+            e.song.album,
+          );
         },
         playNextSong: (_) async {
           if (state.queue.isEmpty) return;
@@ -65,7 +77,13 @@ class MusicPlayerBloc extends Bloc<MusicPlayerEvent, MusicPlayerState> {
                 isPlaying: true,
               ),
             );
-            await _audioRepository.playSong(nextSong.path);
+            await _audioRepository.playSong(
+              nextSong.path,
+              nextSong.title,
+              nextSong.artist,
+              nextSong.id.toString(),
+              nextSong.album,
+            );
           }
         },
         playPreviousSong: (_) async {
@@ -82,7 +100,13 @@ class MusicPlayerBloc extends Bloc<MusicPlayerEvent, MusicPlayerState> {
                   isPlaying: true,
                 ),
               );
-              await _audioRepository.playSong(prevSong.path);
+              await _audioRepository.playSong(
+                prevSong.path,
+                prevSong.title,
+                prevSong.artist,
+                prevSong.id.toString(),
+                prevSong.album,
+              );
             }
           }
         },

@@ -1,6 +1,12 @@
 abstract class AudioPlayerRepository {
   // Actions
-  Future<void> playSong(String path);
+  Future<void> playSong(
+    String path,
+    String title,
+    String artist,
+    String songId,
+    String albumId,
+  );
   Future<void> pause();
   Future<void> resume();
   Future<void> seek(Duration position);
