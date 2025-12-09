@@ -1,11 +1,14 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:music_player/features/analytics/domain/entities/play_log.dart';
+import 'package:music_player/features/analytics/domain/usecases/log_playback.dart';
 import 'package:music_player/features/music_player/domain/repos/audio_player_repository.dart';
 import 'music_player_event.dart';
 import 'music_player_state.dart';
 
 class MusicPlayerBloc extends Bloc<MusicPlayerEvent, MusicPlayerState> {
   final AudioPlayerRepository _audioRepository;
+  final LogPlayback _logPlayback;
 
   StreamSubscription? _positionSubscription;
   StreamSubscription? _durationSubscription;
@@ -15,7 +18,7 @@ class MusicPlayerBloc extends Bloc<MusicPlayerEvent, MusicPlayerState> {
   StreamSubscription? _shuffleSubscription;
   StreamSubscription? _loopSubscription;
 
-  MusicPlayerBloc(this._audioRepository) : super(const MusicPlayerState()) {
+  MusicPlayerBloc(this._audioRepository, this._logPlayback) : super(const MusicPlayerState()) {
     // 1. Setup Listeners
     _positionSubscription = _audioRepository.positionStream.listen((pos) {
       add(MusicPlayerEvent.updatePosition(pos));
@@ -128,6 +131,37 @@ class MusicPlayerBloc extends Bloc<MusicPlayerEvent, MusicPlayerState> {
           emit(state.copyWith(loopMode: e.loopMode));
         },
         updateCurrentSong: (e) async {
+           // --- ANALYTICS LOGGING ---
+           if (state.currentSong != null) {
+              final oldSong = state.currentSong!;
+              final secondsListened = state.position.inSeconds;
+              
+              // Only log if listened for more than 10 seconds
+              if (secondsListened > 10) {
+                 final now = DateTime.now();
+                 final hour = now.hour;
+                 String timeOfDay = 'night';
+                 if (hour >= 5 && hour < 12) timeOfDay = 'morning';
+                 else if (hour >= 12 && hour < 18) timeOfDay = 'afternoon';
+                 
+                 final log = PlayLog(
+                    songId: oldSong.id,
+                    songTitle: oldSong.title,
+                    artist: oldSong.artist,
+                    album: oldSong.album,
+                    genre: 'Unknown', // Genre not available in current SongEntity
+                    timestamp: now,
+                    durationListenedSeconds: secondsListened,
+                    isCompleted: secondsListened >= (state.duration.inSeconds * 0.9),
+                    sessionTimeOfDay: timeOfDay,
+                 );
+                 
+                 // Fire and forget
+                 _logPlayback(log);
+              }
+           }
+           // -------------------------
+        
            // Try to match the incoming song (from OS) with our full-detail queue
            final index = state.queue.indexWhere((s) => s.id == e.song.id);
            final fullSong = index != -1 ? state.queue[index] : e.song;
