@@ -54,8 +54,8 @@ dependencies:
   path: ^1.9.1
   fl_chart: ^1.1.1
   json_annotation: ^4.9.0
+  flutter_native_splash: ^2.4.7
   #flutter_launcher_icons: ^0.14.4
-  #flutter_native_splash: ^2.4.7
 
 dev_dependencies:
   flutter_test:
@@ -69,7 +69,6 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   build_runner: ^2.10.4
   flutter_launcher_icons: ^0.14.4
-  flutter_native_splash: ^2.4.7
   mocktail: ^1.0.4
   json_serializable: ^6.11.2
 dependency_overrides:
