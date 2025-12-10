@@ -13,6 +13,8 @@ class MockAudioPlayerRepository extends Mock implements AudioPlayerRepository {}
 class MockLogPlayback extends Mock implements LogPlayback {}
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   late MockAudioPlayerRepository mockAudioRepository;
   late MockLogPlayback mockLogPlayback;
   late MusicAnalyticsService service;
@@ -20,6 +22,7 @@ void main() {
   late StreamController<bool> isPlayingController;
   late StreamController<SongEntity?> currentSongController;
   late StreamController<Duration> durationController;
+  late StreamController<void> playerCompleteController;
 
   setUp(() {
     mockAudioRepository = MockAudioPlayerRepository();
@@ -29,10 +32,12 @@ void main() {
     isPlayingController = StreamController<bool>.broadcast();
     currentSongController = StreamController<SongEntity?>.broadcast();
     durationController = StreamController<Duration>.broadcast();
+    playerCompleteController = StreamController<void>.broadcast();
 
     when(() => mockAudioRepository.isPlayingStream).thenAnswer((_) => isPlayingController.stream);
     when(() => mockAudioRepository.currentSongStream).thenAnswer((_) => currentSongController.stream);
     when(() => mockAudioRepository.durationStream).thenAnswer((_) => durationController.stream);
+    when(() => mockAudioRepository.playerCompleteStream).thenAnswer((_) => playerCompleteController.stream);
     
     registerFallbackValue(PlayLog(
       songId: 0, 
@@ -51,6 +56,7 @@ void main() {
     isPlayingController.close();
     currentSongController.close();
     durationController.close();
+    playerCompleteController.close();
     service.dispose();
   });
 
@@ -128,5 +134,29 @@ void main() {
     // Should verify only ONE call (at the end), not an intermediate one.
     // The total duration should be around 6 seconds.
     verify(() => mockLogPlayback(any(that: isA<PlayLog>().having((log) => log.durationListenedSeconds, 'duration', greaterThanOrEqualTo(5))))).called(1);
+  });
+
+  test('should log when song completes naturally', () async {
+    // Arrange
+    when(() => mockLogPlayback(any())).thenAnswer((_) async => Right(null));
+    service.init();
+    
+    // Act
+    currentSongController.add(tSong);
+    isPlayingController.add(true);
+    
+    // Listen for 10 seconds
+    await Future.delayed(const Duration(seconds: 10));
+    
+    // Emit Completion Event
+    playerCompleteController.add(null);
+    await Future.delayed(const Duration(milliseconds: 100));
+
+    // Assert
+    // Should log as completed
+    verify(() => mockLogPlayback(any(that: isA<PlayLog>()
+      .having((log) => log.isCompleted, 'isCompleted', true)
+      .having((log) => log.durationListenedSeconds, 'duration', greaterThanOrEqualTo(9))
+    ))).called(1);
   });
 }
