@@ -34,7 +34,7 @@ Within each feature:
 *   **Media Notifications:** Full integration with OS media controls (Android 13+ / iOS Control Center), including Seek bars and Artwork.
 *   **Playback Modes:** Support for Shuffle and Repeat (Off/All/One).
 *   **Permission Handling:** Graceful handling of Android 13+ `READ_MEDIA_AUDIO` and legacy `READ_EXTERNAL_STORAGE` permissions.
-*   **Analytics:** Persistent, event-driven playback logging using `MusicAnalyticsService`. Tracks exact listening duration and play counts locally via SQLite.
+*   **Analytics:** Persistent, event-driven playback logging using `MusicAnalyticsService`. Includes a **Visual Dashboard** with interactive charts (Genre, Time of Day, Listening History) powered by `fl_chart`.
 
 ## 🛠 Tech Stack
 
@@ -48,6 +48,7 @@ Within each feature:
 | **Functional** | `fpdart` | Error handling using `Either<Failure, Success>`. |
 | **Code Gen** | `freezed` | Immutable data classes and unions. |
 | **Database** | `sqflite` | Local storage for analytics data. |
+| **Visualization** | `fl_chart` | Interactive data visualization for the Analytics Dashboard. |
 
 ## 📦 Project Structure
 
