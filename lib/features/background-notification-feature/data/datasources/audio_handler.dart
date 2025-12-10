@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:audio_service/audio_service.dart';
 import 'package:just_audio/just_audio.dart';
 
@@ -6,33 +8,29 @@ import 'package:just_audio/just_audio.dart';
 class MusicPlayerHandler extends BaseAudioHandler
     with QueueHandler, SeekHandler {
   final AudioPlayer _player;
-  
-  // The playlist that just_audio will play sequentially
-  final ConcatenatingAudioSource _playlist = ConcatenatingAudioSource(children: []);
 
-  MusicPlayerHandler({AudioPlayer? player}) : _player = player ?? AudioPlayer() {
+  MusicPlayerHandler({AudioPlayer? player})
+    : _player = player ?? AudioPlayer() {
     _initPlayerListeners();
-    // We set the source immediately, even if empty, so the player is ready
-    _player.setAudioSource(_playlist);
   }
 
   // 1. Initialize Listeners: Sync just_audio events -> audio_service State
   void _initPlayerListeners() {
     // Broadcast the current song details to the Lock Screen / Notification
     _player.sequenceStateStream.listen((sequenceState) {
-      if (sequenceState == null) return;
-      
       // Update Current Media Item
       final currentItem = sequenceState.currentSource;
       if (currentItem != null) {
         final tag = currentItem.tag as MediaItem;
         mediaItem.add(tag);
       }
-      
+
       // Update Queue (Optional: if we modify queue dynamically)
       final sequence = sequenceState.sequence;
       if (sequence.isNotEmpty) {
-        final items = sequence.map((source) => source.tag as MediaItem).toList();
+        final items = sequence
+            .map((source) => source.tag as MediaItem)
+            .toList();
         queue.add(items);
       }
     });
@@ -73,7 +71,7 @@ class MusicPlayerHandler extends BaseAudioHandler
     // We need to bridge the position stream to AudioService so the seek bar works in UI.
     // However, AudioService calculates position based on 'updatePosition' + 'speed' * (now - updateTime).
     // So we just need to ensure we emit a state whenever Play/Pause/Seek happens.
-    // _player.playbackEventStream handles this for us. 
+    // _player.playbackEventStream handles this for us.
     // BUT, we might need to be explicit about the 'playing' state.
   }
 
@@ -118,7 +116,7 @@ class MusicPlayerHandler extends BaseAudioHandler
   }
 
   // 3. Custom Queue Management (The "True Background" Logic)
-  
+
   /// Replaces the entire queue and starts playing from [initialIndex]
   Future<void> setQueueItems({
     required List<MediaItem> items,
@@ -133,29 +131,17 @@ class MusicPlayerHandler extends BaseAudioHandler
         );
       }).toList();
 
-      // 2. Clear and Rebuild Playlist
-      // We explicitly clear to avoid "concatenating" to old queues
-      await _playlist.clear(); 
-      await _playlist.addAll(audioSources);
+      // 2. Set the player to this playlist and jump to index
+      await _player.setAudioSources(audioSources, initialIndex: initialIndex);
 
-      // 3. Set the player to this playlist and jump to index
-      // Note: We already set _playlist in constructor, but calling setAudioSource again 
-      // ensures state reset if needed, or we can just seek.
-      // However, just_audio recommends initializing source once if possible.
-      // Since we modified _playlist (which is the source), we might just need to seek.
-      // But dealing with race conditions on 'clear' + 'add' while playing can be tricky.
-      // Safe approach:
-      await _player.setAudioSource(_playlist, initialIndex: initialIndex);
-      
       // 4. Play
       await _player.play();
-      
+
       // 5. Update AudioService Queue (For UI to see)
       queue.add(items);
       mediaItem.add(items[initialIndex]);
-      
     } catch (e) {
-      print("Error setting queue: $e");
+      log("Error setting queue: $e");
       // TODO: Add robust error handling (e.g., broadcasting error state)
     }
   }

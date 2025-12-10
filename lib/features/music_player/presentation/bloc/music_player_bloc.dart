@@ -18,7 +18,8 @@ class MusicPlayerBloc extends Bloc<MusicPlayerEvent, MusicPlayerState> {
   StreamSubscription? _shuffleSubscription;
   StreamSubscription? _loopSubscription;
 
-  MusicPlayerBloc(this._audioRepository, this._logPlayback) : super(const MusicPlayerState()) {
+  MusicPlayerBloc(this._audioRepository, this._logPlayback)
+    : super(const MusicPlayerState()) {
     // 1. Setup Listeners
     _positionSubscription = _audioRepository.positionStream.listen((pos) {
       add(MusicPlayerEvent.updatePosition(pos));
@@ -33,8 +34,10 @@ class MusicPlayerBloc extends Bloc<MusicPlayerEvent, MusicPlayerState> {
     ) {
       add(MusicPlayerEvent.updatePlayerState(isPlaying));
     });
-    
-    _shuffleSubscription = _audioRepository.isShuffleModeEnabledStream.listen((enabled) {
+
+    _shuffleSubscription = _audioRepository.isShuffleModeEnabledStream.listen((
+      enabled,
+    ) {
       add(MusicPlayerEvent.updateShuffleState(enabled));
     });
 
@@ -43,7 +46,9 @@ class MusicPlayerBloc extends Bloc<MusicPlayerEvent, MusicPlayerState> {
     });
 
     // Listen to the Operating System / Audio Service for the current song
-    _currentSongSubscription = _audioRepository.currentSongStream.listen((song) {
+    _currentSongSubscription = _audioRepository.currentSongStream.listen((
+      song,
+    ) {
       if (song != null) {
         add(MusicPlayerEvent.updateCurrentSong(song));
       }
@@ -81,15 +86,15 @@ class MusicPlayerBloc extends Bloc<MusicPlayerEvent, MusicPlayerState> {
           );
         },
         playNextSong: (_) async {
-           // Delegate to Handler
-           await _audioRepository.skipToNext();
+          // Delegate to Handler
+          await _audioRepository.skipToNext();
         },
         playPreviousSong: (_) async {
-           // Delegate to Handler
-           await _audioRepository.skipToPrevious();
+          // Delegate to Handler
+          await _audioRepository.skipToPrevious();
         },
         songFinished: (_) async {
-          // ConcatenatingAudioSource handles song transitions.
+          // The player handles song transitions automatically.
           // This event now only signifies the END of the entire playlist.
           emit(state.copyWith(isPlaying: false, isPlaylistEnd: true));
         },
@@ -107,7 +112,7 @@ class MusicPlayerBloc extends Bloc<MusicPlayerEvent, MusicPlayerState> {
         },
         cycleLoopMode: (_) async {
           final nextMode = (state.loopMode + 1) % 3;
-           // Optimistic update
+          // Optimistic update
           emit(state.copyWith(loopMode: nextMode));
           await _audioRepository.setRepeatMode(nextMode);
         },
@@ -131,45 +136,51 @@ class MusicPlayerBloc extends Bloc<MusicPlayerEvent, MusicPlayerState> {
           emit(state.copyWith(loopMode: e.loopMode));
         },
         updateCurrentSong: (e) async {
-           // --- ANALYTICS LOGGING ---
-           if (state.currentSong != null) {
-              final oldSong = state.currentSong!;
-              final secondsListened = state.position.inSeconds;
-              
-              // Only log if listened for more than 10 seconds
-              if (secondsListened > 10) {
-                 final now = DateTime.now();
-                 final hour = now.hour;
-                 String timeOfDay = 'night';
-                 if (hour >= 5 && hour < 12) timeOfDay = 'morning';
-                 else if (hour >= 12 && hour < 18) timeOfDay = 'afternoon';
-                 
-                 final log = PlayLog(
-                    songId: oldSong.id,
-                    songTitle: oldSong.title,
-                    artist: oldSong.artist,
-                    album: oldSong.album,
-                    genre: 'Unknown', // Genre not available in current SongEntity
-                    timestamp: now,
-                    durationListenedSeconds: secondsListened,
-                    isCompleted: secondsListened >= (state.duration.inSeconds * 0.9),
-                    sessionTimeOfDay: timeOfDay,
-                 );
-                 
-                 // Fire and forget
-                 _logPlayback(log);
+          // --- ANALYTICS LOGGING ---
+          if (state.currentSong != null) {
+            final oldSong = state.currentSong!;
+            final secondsListened = state.position.inSeconds;
+
+            // Only log if listened for more than 10 seconds
+            if (secondsListened > 10) {
+              final now = DateTime.now();
+              final hour = now.hour;
+              String timeOfDay = 'night';
+              if (hour >= 5 && hour < 12) {
+                timeOfDay = 'morning';
+              } else if (hour >= 12 && hour < 18) {
+                timeOfDay = 'afternoon';
               }
-           }
-           // -------------------------
-        
-           // Try to match the incoming song (from OS) with our full-detail queue
-           final index = state.queue.indexWhere((s) => s.id == e.song.id);
-           final fullSong = index != -1 ? state.queue[index] : e.song;
-           
-           emit(state.copyWith(
-             currentSong: fullSong,
-             currentIndex: index != -1 ? index : state.currentIndex,
-           ));
+
+              final log = PlayLog(
+                songId: oldSong.id,
+                songTitle: oldSong.title,
+                artist: oldSong.artist,
+                album: oldSong.album,
+                genre: 'Unknown', // Genre not available in current SongEntity
+                timestamp: now,
+                durationListenedSeconds: secondsListened,
+                isCompleted:
+                    secondsListened >= (state.duration.inSeconds * 0.9),
+                sessionTimeOfDay: timeOfDay,
+              );
+
+              // Fire and forget
+              _logPlayback(log);
+            }
+          }
+          // -------------------------
+
+          // Try to match the incoming song (from OS) with our full-detail queue
+          final index = state.queue.indexWhere((s) => s.id == e.song.id);
+          final fullSong = index != -1 ? state.queue[index] : e.song;
+
+          emit(
+            state.copyWith(
+              currentSong: fullSong,
+              currentIndex: index != -1 ? index : state.currentIndex,
+            ),
+          );
         },
       );
     });

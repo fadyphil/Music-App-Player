@@ -6,9 +6,6 @@ import 'package:music_player/features/background-notification-feature/data/datas
 
 class MockAudioPlayer extends Mock implements AudioPlayer {}
 
-class MockConcatenatingAudioSource extends Mock
-    implements ConcatenatingAudioSource {}
-
 class FakeAudioSource extends Fake implements AudioSource {}
 
 void main() {
@@ -35,7 +32,7 @@ void main() {
     when(() => mockPlayer.playing).thenReturn(false);
     when(() => mockPlayer.processingState).thenReturn(ProcessingState.idle);
     when(
-      () => mockPlayer.setAudioSource(
+      () => mockPlayer.setAudioSources(
         any(),
         initialIndex: any(named: 'initialIndex'),
       ),
