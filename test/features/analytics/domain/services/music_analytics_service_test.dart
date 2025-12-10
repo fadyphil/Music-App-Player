@@ -100,4 +100,33 @@ void main() {
     // We expect log call with ~6 seconds
     verify(() => mockLogPlayback(any(that: isA<PlayLog>().having((log) => log.durationListenedSeconds, 'duration', greaterThanOrEqualTo(5))))).called(1);
   });
+
+  test('should not log if song update is duplicate', () async {
+    // Arrange
+    when(() => mockLogPlayback(any())).thenAnswer((_) async => Right(null));
+    service.init();
+    
+    // Act
+    // 1. Start playing song
+    currentSongController.add(tSong);
+    isPlayingController.add(true);
+    
+    // 2. Wait 2 seconds
+    await Future.delayed(const Duration(seconds: 2));
+    
+    // 3. Emit SAME song again (e.g. metadata update)
+    currentSongController.add(tSong);
+    
+    // 4. Wait 4 seconds
+    await Future.delayed(const Duration(seconds: 4));
+    
+    // 5. Change to new song
+    currentSongController.add(null);
+    await Future.delayed(const Duration(milliseconds: 100));
+
+    // Assert
+    // Should verify only ONE call (at the end), not an intermediate one.
+    // The total duration should be around 6 seconds.
+    verify(() => mockLogPlayback(any(that: isA<PlayLog>().having((log) => log.durationListenedSeconds, 'duration', greaterThanOrEqualTo(5))))).called(1);
+  });
 }

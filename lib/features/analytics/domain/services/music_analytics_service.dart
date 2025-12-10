@@ -47,6 +47,9 @@ class MusicAnalyticsService {
   }
 
   void _onSongChanged(SongEntity? newSong) {
+    // Ignore duplicate updates (e.g. metadata refresh)
+    if (_currentSong?.id == newSong?.id) return;
+
     if (_currentSong != null) {
       // Log the previous song
       _finalizeAndLog(_currentSong!, _currentSongDuration);
