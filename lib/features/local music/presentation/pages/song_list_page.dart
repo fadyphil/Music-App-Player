@@ -11,6 +11,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 
 // Architecture Imports
+import 'package:music_player/features/analytics/presentation/pages/analytics_dashboard_page.dart';
 import '../../../../core/di/init_dependencies.dart';
 import '../../../../core/theme/app_pallete.dart';
 import '../../domain/entities/song_entity.dart';
@@ -57,6 +58,10 @@ class _SongListPageState extends State<SongListPage>
 
   Future<void> _checkPermissionAndFetch() async {
     Permission permission;
+    if (Platform.isLinux || Platform.isMacOS || Platform.isWindows) {
+      _fetchSongs();
+      return;
+    }
     if (Platform.isAndroid) {
       final androidInfo = await DeviceInfoPlugin().androidInfo;
       if (androidInfo.version.sdkInt >= 33) {
@@ -481,6 +486,27 @@ class _SongListSliverAppBar extends StatelessWidget {
           ),
         ),
       ),
+      actions: [
+        IconButton(
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const AnalyticsDashboardPage()),
+          ),
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.bar_chart_rounded,
+              color: Colors.white,
+              size: 18,
+            ),
+          ),
+        ),
+        const SizedBox(width: 16),
+      ],
       flexibleSpace: LayoutBuilder(
         builder: (BuildContext context, BoxConstraints constraints) {
           final top = constraints.biggest.height;

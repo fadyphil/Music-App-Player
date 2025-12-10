@@ -1,6 +1,14 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:get_it/get_it.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:music_player/features/analytics/data/datasources/analytics_local_datasource.dart';
+import 'package:music_player/features/analytics/data/repositories/analytics_repository_impl.dart';
+import 'package:music_player/features/analytics/domain/repositories/analytics_repository.dart';
+import 'package:music_player/features/analytics/domain/usecases/get_general_stats.dart';
+import 'package:music_player/features/analytics/domain/usecases/get_top_items.dart';
+import 'package:music_player/features/analytics/domain/usecases/log_playback.dart';
+import 'package:music_player/features/analytics/domain/services/music_analytics_service.dart';
+import 'package:music_player/features/analytics/presentation/bloc/analytics_bloc.dart';
 import 'package:music_player/features/background-notification-feature/data/datasources/audio_handler.dart';
 import 'package:music_player/features/local%20music/data/datasource/local_music_datasource.dart';
 import 'package:music_player/features/local%20music/data/repositories/music_repository_impl.dart';
@@ -11,8 +19,6 @@ import 'package:music_player/features/music_player/data/repos/audio_player_repos
 import 'package:music_player/features/music_player/domain/repos/audio_player_repository.dart';
 import 'package:music_player/features/music_player/presentation/bloc/music_player_bloc.dart';
 import 'package:on_audio_query/on_audio_query.dart';
-
-// Import your features
 
 // Create the global instance
 final serviceLocator = GetIt.instance;
@@ -71,5 +77,40 @@ Future<void> initDependencies() async {
     () => AudioPlayerRepositoryImpl(serviceLocator<AudioHandler>()),
   );
 
-  serviceLocator.registerLazySingleton(() => MusicPlayerBloc(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => MusicPlayerBloc(
+        serviceLocator(),
+      ));
+
+  // =========================================================
+  // FEATURE: ANALYTICS
+  // =========================================================
+  serviceLocator.registerLazySingleton<AnalyticsLocalDataSource>(
+    () => AnalyticsLocalDataSourceImpl(),
+  );
+
+  serviceLocator.registerLazySingleton<AnalyticsRepository>(
+    () => AnalyticsRepositoryImpl(serviceLocator()),
+  );
+
+  serviceLocator.registerLazySingleton(() => LogPlayback(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => GetTopSongs(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => GetTopArtists(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => GetTopAlbums(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => GetTopGenres(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => GetGeneralStats(serviceLocator()));
+  
+  serviceLocator.registerLazySingleton(
+    () => MusicAnalyticsService(serviceLocator(), serviceLocator()),
+  );
+
+  serviceLocator.registerFactory(
+    () => AnalyticsBloc(
+      logPlayback: serviceLocator(),
+      getTopSongs: serviceLocator(),
+      getTopArtists: serviceLocator(),
+      getTopAlbums: serviceLocator(),
+      getTopGenres: serviceLocator(),
+      getGeneralStats: serviceLocator(),
+    ),
+  );
 }

@@ -46,3 +46,7 @@ app.*.map.json
 
 Detailed-report.md
 GEMINI.md
+# Generated code
+*.g.dart
+*.freezed.dart
+*.jpeg
