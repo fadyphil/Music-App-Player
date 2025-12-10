@@ -49,3 +49,4 @@ GEMINI.md
 # Generated code
 *.g.dart
 *.freezed.dart
+*.jpeg
