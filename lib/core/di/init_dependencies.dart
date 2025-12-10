@@ -7,6 +7,7 @@ import 'package:music_player/features/analytics/domain/repositories/analytics_re
 import 'package:music_player/features/analytics/domain/usecases/get_general_stats.dart';
 import 'package:music_player/features/analytics/domain/usecases/get_top_items.dart';
 import 'package:music_player/features/analytics/domain/usecases/log_playback.dart';
+import 'package:music_player/features/analytics/domain/services/music_analytics_service.dart';
 import 'package:music_player/features/analytics/presentation/bloc/analytics_bloc.dart';
 import 'package:music_player/features/background-notification-feature/data/datasources/audio_handler.dart';
 import 'package:music_player/features/local%20music/data/datasource/local_music_datasource.dart';
@@ -78,7 +79,6 @@ Future<void> initDependencies() async {
 
   serviceLocator.registerLazySingleton(() => MusicPlayerBloc(
         serviceLocator(),
-        serviceLocator(),
       ));
 
   // =========================================================
@@ -98,6 +98,10 @@ Future<void> initDependencies() async {
   serviceLocator.registerLazySingleton(() => GetTopAlbums(serviceLocator()));
   serviceLocator.registerLazySingleton(() => GetTopGenres(serviceLocator()));
   serviceLocator.registerLazySingleton(() => GetGeneralStats(serviceLocator()));
+  
+  serviceLocator.registerLazySingleton(
+    () => MusicAnalyticsService(serviceLocator(), serviceLocator()),
+  );
 
   serviceLocator.registerFactory(
     () => AnalyticsBloc(

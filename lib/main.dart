@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:music_player/core/theme/app_theme.dart';
 import 'package:music_player/features/local%20music/presentation/pages/song_list_page.dart';
 import 'package:music_player/core/di/init_dependencies.dart';
+import 'package:music_player/features/analytics/domain/services/music_analytics_service.dart';
 import 'package:music_player/features/music_player/presentation/bloc/music_player_bloc.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart'; // Import this
 
@@ -12,6 +13,7 @@ void main() async {
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
   await initDependencies();
+  serviceLocator<MusicAnalyticsService>().init();
   runApp(const MyApp());
 }
 
