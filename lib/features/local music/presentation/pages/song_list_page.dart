@@ -58,6 +58,10 @@ class _SongListPageState extends State<SongListPage>
 
   Future<void> _checkPermissionAndFetch() async {
     Permission permission;
+    if (Platform.isLinux || Platform.isMacOS || Platform.isWindows) {
+      _fetchSongs();
+      return;
+    }
     if (Platform.isAndroid) {
       final androidInfo = await DeviceInfoPlugin().androidInfo;
       if (androidInfo.version.sdkInt >= 33) {
@@ -486,9 +490,7 @@ class _SongListSliverAppBar extends StatelessWidget {
         IconButton(
           onPressed: () => Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (_) => const AnalyticsDashboardPage(),
-            ),
+            MaterialPageRoute(builder: (_) => const AnalyticsDashboardPage()),
           ),
           icon: Container(
             padding: const EdgeInsets.all(8),
