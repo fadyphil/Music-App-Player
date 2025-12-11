@@ -5,8 +5,10 @@ import '../../../analytics/presentation/pages/analytics_dashboard_page.dart';
 import '../../../local music/presentation/pages/song_list_page.dart';
 import '../cubit/home_cubit.dart';
 import '../cubit/home_state.dart';
-// import '../widgets/prism_knob_navigation.dart'; // Option 1: The Prism Knob
-import '../widgets/neural_string_navigation.dart'; // Option 2: The Neural String
+// import '../widgets/prism_knob_navigation.dart'; // Option 1
+// import '../widgets/neural_string_navigation.dart'; // Option 2
+// import '../widgets/gravity_dock_navigation.dart'; // Option 3
+import '../widgets/simple_animated_nav_bar.dart'; // Option 4: Simple Animated Nav Bar
 import 'profile_page.dart';
 
 class HomePage extends StatelessWidget {
@@ -69,30 +71,19 @@ class _HomeView extends StatelessWidget {
           ),
 
           // NAVIGATION DECK
-          // Use 'PrismKnobNavigation' or 'NeuralStringNavigation'
           Positioned(
             left: 0,
             right: 0,
             bottom: 0,
             child: BlocBuilder<HomeCubit, HomeState>(
               builder: (context, state) {
-                // CURRENT SELECTION: NEURAL STRING
-                return NeuralStringNavigation(
+                // CURRENT SELECTION: SIMPLE ANIMATED NAV BAR
+                return SimpleAnimatedNavBar(
                   selectedTab: state.selectedTab,
                   onTabSelected: (tab) {
                     context.read<HomeCubit>().setTab(tab);
                   },
                 );
-                
-                // LEGACY SELECTION: PRISM KNOB (Uncomment to swap)
-                /*
-                return PrismKnobNavigation(
-                  selectedTab: state.selectedTab,
-                  onTabSelected: (tab) {
-                    context.read<HomeCubit>().setTab(tab);
-                  },
-                );
-                */
               },
             ),
           ),
