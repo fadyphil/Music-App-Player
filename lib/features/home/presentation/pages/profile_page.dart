@@ -5,60 +5,114 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Tech-Noir Aesthetic
     return Scaffold(
-      backgroundColor: const Color(0xFF121212), // Deep organic background
+      backgroundColor: Colors.transparent, // Let the background gradient shine
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Abstract "Avatar" placeholder - Organic Circle
+            // Schematic Circle
             Container(
-              width: 120,
-              height: 120,
+              width: 140,
+              height: 140,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.white.withValues(alpha: 0.1),
-                    Colors.white.withValues(alpha: 0.05),
-                  ],
-                ),
                 border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.2),
+                  color: Colors.white24,
                   width: 1,
                 ),
               ),
-              child: const Icon(
-                Icons.fingerprint, 
-                size: 40, 
-                color: Colors.white38,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Spinning Ring (Static for now, implies motion)
+                  Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                  const Icon(
+                    Icons.fingerprint,
+                    size: 60,
+                    color: Colors.white,
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 32),
-            Text(
-              'Identity',
-              style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                    color: Colors.white70,
-                    fontWeight: FontWeight.w200, // Thin, elegant
-                    letterSpacing: 4.0,
-                    fontFamily: 'Roboto', // Fallback, assume system font is decent
-                  ),
+            const SizedBox(height: 48),
+            
+            // Monospace Typography
+            const Text(
+              "SUBJECT: USER_01",
+              style: TextStyle(
+                fontFamily: 'monospace',
+                letterSpacing: 3.0,
+                color: Colors.white54,
+                fontSize: 12,
+              ),
             ),
             const SizedBox(height: 12),
             Text(
-              'Curate your sonic aura',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Colors.white30,
-                fontStyle: FontStyle.italic,
-                fontWeight: FontWeight.w300,
-                letterSpacing: 1.0,
-              ),
+              "AUDITORY PROFILE",
+              style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: -1.0,
+                    color: Colors.white,
+                  ),
+            ),
+            
+            const SizedBox(height: 24),
+            // Decorative Data Lines
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _DataPoint(label: "FREQ", value: "44.1kHz"),
+                const SizedBox(width: 32),
+                _DataPoint(label: "BITRATE", value: "320kbps"),
+              ],
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _DataPoint extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _DataPoint({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white30,
+            fontSize: 10,
+            fontFamily: 'monospace',
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.0,
+          ),
+        ),
+      ],
     );
   }
 }
