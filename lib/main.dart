@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:music_player/core/theme/app_theme.dart';
 import 'package:music_player/core/usecases/usecase.dart';
-import 'package:music_player/features/local%20music/presentation/pages/song_list_page.dart';
+import 'package:music_player/features/home/presentation/pages/home_page.dart';
 import 'package:music_player/core/di/init_dependencies.dart';
 import 'package:music_player/features/analytics/domain/services/music_analytics_service.dart';
 import 'package:music_player/features/music_player/presentation/bloc/music_player_bloc.dart';
@@ -53,7 +53,7 @@ class _MyAppState extends State<MyApp> {
         debugShowCheckedModeBanner: false,
         title: 'Spotify el 8alaba',
         theme: AppTheme.darkThemeMode,
-        home: widget.isFirstRun ? const OnboardingPage() : const SongListPage(),
+        home: widget.isFirstRun ? const OnboardingPage() : const HomePage(),
       ),
     );
   }

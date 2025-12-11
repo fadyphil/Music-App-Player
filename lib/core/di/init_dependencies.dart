@@ -24,6 +24,7 @@ import 'package:music_player/features/onboarding/domain/repositories/onboarding_
 import 'package:music_player/features/onboarding/domain/usecases/cache_first_timer.dart';
 import 'package:music_player/features/onboarding/domain/usecases/check_if_user_is_first_timer.dart';
 import 'package:music_player/features/onboarding/presentation/cubit/onboarding_cubit.dart';
+import 'package:music_player/features/home/presentation/cubit/home_cubit.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -140,4 +141,9 @@ Future<void> initDependencies() async {
   serviceLocator.registerFactory(
     () => OnboardingCubit(cacheFirstTimer: serviceLocator()),
   );
+
+  // =========================================================
+  // FEATURE: HOME
+  // =========================================================
+  serviceLocator.registerFactory(() => HomeCubit());
 }

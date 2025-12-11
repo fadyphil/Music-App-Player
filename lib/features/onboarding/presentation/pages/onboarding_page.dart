@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:music_player/core/theme/app_pallete.dart';
-import 'package:music_player/features/local%20music/presentation/pages/song_list_page.dart';
+import 'package:music_player/features/home/presentation/pages/home_page.dart';
 import 'package:music_player/features/onboarding/presentation/cubit/onboarding_cubit.dart';
 import 'package:music_player/features/onboarding/presentation/widgets/onboarding_content.dart';
 import 'package:music_player/core/di/init_dependencies.dart'; // Import serviceLocator
@@ -56,7 +56,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       return;
     }
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => const SongListPage()),
+      MaterialPageRoute(builder: (context) => const HomePage()),
     );
   }
 
