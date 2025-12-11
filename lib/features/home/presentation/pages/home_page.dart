@@ -5,7 +5,7 @@ import '../../../analytics/presentation/pages/analytics_dashboard_page.dart';
 import '../../../local music/presentation/pages/song_list_page.dart';
 import '../cubit/home_cubit.dart';
 import '../cubit/home_state.dart';
-import '../widgets/sacred_bottom_navigation_bar.dart';
+import '../widgets/organic_bottom_navigation_bar.dart';
 import 'profile_page.dart';
 
 class HomePage extends StatelessWidget {
@@ -50,7 +50,7 @@ class _HomeView extends StatelessWidget {
             bottom: 0,
             child: BlocBuilder<HomeCubit, HomeState>(
               builder: (context, state) {
-                return SacredBottomNavigationBar(
+                return OrganicBottomNavigationBar(
                   selectedTab: state.selectedTab,
                   onTabSelected: (tab) {
                     context.read<HomeCubit>().setTab(tab);
