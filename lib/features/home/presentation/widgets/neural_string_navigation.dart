@@ -234,7 +234,7 @@ class _StringPainter extends CustomPainter {
 
     final path = Path();
     final width = size.width;
-    final centerY = size.height / 2 + 15; // Offset slightly down
+    final centerY = 15.0; // Moved to the top of the 100px height for the nav bar
 
     path.moveTo(0, centerY);
 
