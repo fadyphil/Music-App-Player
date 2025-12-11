@@ -7,24 +7,43 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
+import 'package:get_it/get_it.dart';
+import 'package:music_player/features/analytics/domain/services/music_analytics_service.dart';
+import 'package:music_player/features/music_player/presentation/bloc/music_player_bloc.dart';
+import 'package:music_player/features/onboarding/presentation/cubit/onboarding_cubit.dart';
 import 'package:music_player/main.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:bloc_test/bloc_test.dart';
+
+// Mocks
+class MockMusicPlayerBloc extends Mock implements MusicPlayerBloc {}
+class MockMusicAnalyticsService extends Mock implements MusicAnalyticsService {}
+class MockOnboardingCubit extends MockCubit<int> implements OnboardingCubit {}
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
+  setUpAll(() {
+    // Register generic fallbacks if needed
+  });
+
+  tearDown(() {
+    GetIt.instance.reset();
+  });
+
+  testWidgets('App renders correctly', (WidgetTester tester) async {
+    // Setup GetIt
+    final getIt = GetIt.instance;
+    getIt.registerLazySingleton<MusicPlayerBloc>(() => MockMusicPlayerBloc());
+    getIt.registerLazySingleton<MusicAnalyticsService>(() => MockMusicAnalyticsService());
+    
+    final mockOnboardingCubit = MockOnboardingCubit();
+    when(() => mockOnboardingCubit.state).thenReturn(0);
+    getIt.registerFactory<OnboardingCubit>(() => mockOnboardingCubit);
+
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+    // Pass isFirstRun: true or false depending on what we want to smoke test
+    await tester.pumpWidget(const MyApp(isFirstRun: true));
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Verify that the app builds without crashing
+    expect(find.byType(MaterialApp), findsOneWidget);
   });
 }
