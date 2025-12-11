@@ -5,7 +5,8 @@ import '../../../analytics/presentation/pages/analytics_dashboard_page.dart';
 import '../../../local music/presentation/pages/song_list_page.dart';
 import '../cubit/home_cubit.dart';
 import '../cubit/home_state.dart';
-import '../widgets/prism_knob_navigation.dart';
+// import '../widgets/prism_knob_navigation.dart'; // Option 1: The Prism Knob
+import '../widgets/neural_string_navigation.dart'; // Option 2: The Neural String
 import 'profile_page.dart';
 
 class HomePage extends StatelessWidget {
@@ -26,7 +27,7 @@ class _HomeView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBody: true, // Content behind the knob
+      extendBody: true, // Content behind the nav
       body: Stack(
         children: [
           // Content Layer
@@ -43,12 +44,12 @@ class _HomeView extends StatelessWidget {
             },
           ),
 
-          // Gradient Fade at bottom to ensure knob visibility
+          // Gradient Fade at bottom to ensure nav visibility
           Positioned(
             left: 0,
             right: 0,
             bottom: 0,
-            height: 200,
+            height: 160,
             child: IgnorePointer(
               child: Container(
                 decoration: BoxDecoration(
@@ -60,26 +61,38 @@ class _HomeView extends StatelessWidget {
                       Colors.black.withValues(alpha: 0.8),
                       Colors.black,
                     ],
-                    stops: const [0.0, 0.7, 1.0],
+                    stops: const [0.0, 0.6, 1.0],
                   ),
                 ),
               ),
             ),
           ),
 
-          // The Prism Knob (Floating Control)
+          // NAVIGATION DECK
+          // Use 'PrismKnobNavigation' or 'NeuralStringNavigation'
           Positioned(
             left: 0,
             right: 0,
-            bottom: 20,
+            bottom: 0,
             child: BlocBuilder<HomeCubit, HomeState>(
               builder: (context, state) {
+                // CURRENT SELECTION: NEURAL STRING
+                return NeuralStringNavigation(
+                  selectedTab: state.selectedTab,
+                  onTabSelected: (tab) {
+                    context.read<HomeCubit>().setTab(tab);
+                  },
+                );
+                
+                // LEGACY SELECTION: PRISM KNOB (Uncomment to swap)
+                /*
                 return PrismKnobNavigation(
                   selectedTab: state.selectedTab,
                   onTabSelected: (tab) {
                     context.read<HomeCubit>().setTab(tab);
                   },
                 );
+                */
               },
             ),
           ),
