@@ -2,101 +2,130 @@
 > This project is currently under active development. I am using it to strictly practice
 > **Clean Architecture** and **BLoC**. Some features may be incomplete.
 
+---
+
+title: Music Player Architecture Reference
+description: A production-grade Flutter application demonstrating Feature-First Clean Architecture, BLoC, and Offline-First principles.
+tags: [flutter, clean-architecture, bloc, audio, sqlite]
+
+---
+
 # Music Player 🎵
 
-> **Status:** Active Development  
-> **Architecture:** Feature-First Clean Architecture  
+> **Status:** Active Development (Beta)  
+> **Architecture:** Feature-First Clean Architecture (DDD)  
 > **State Management:** BLoC (Business Logic Component)
 
-A robust, offline-first music player built with Flutter, designed to demonstrate enterprise-grade architecture patterns, background audio resilience, and modern UI/UX principles.
+## Overview
 
-## 🏗 Architecture & Design
+This project serves as a strictly typed, production-grade reference implementation for **Clean Architecture** in Flutter. It is designed to demonstrate how to build a scalable, testable, and offline-first mobile application that survives background process termination and strictly enforces separation of concerns.
 
-This project adheres strictly to **Clean Architecture** principles, enforcing a separation of concerns that ensures scalability and testability.
+Unlike simple "todo apps," this project tackles real-world complexity:
 
-### 1. Domain-Driven Design (DDD)
-The codebase is modularized by **Features**, not by layer. Each feature is a self-contained unit:
-*   **`lib/features/local music/`**: Responsible for querying the device's storage for audio files (Data Source) and presenting the library (UI).
-*   **`lib/features/music_player/`**: The playback engine. Manages the Now Playing screen, transport controls, and synchronization with the OS.
-*   **`lib/features/background-notification-feature/`**: A specialized **Infrastructure Module** hosting the `AudioHandler`. It acts as the bridge between the Flutter UI and the Android/iOS media session, ensuring playback survives background process termination.
+- **Background Audio:** Managing Android/iOS media sessions (`MediaSessionService`) when the app is killed.
+- **Persistence:** A local SQLite database for analytics and `SharedPreferences` for flags.
+- **Hardware Permissions:** Graceful handling of Android 13+ granular media permissions.
 
-### 2. Layered Structure
-Within each feature:
-*   **Domain (Inner Layer):** Pure Dart. Contains `Entities`, `UseCases`, and Repository Interfaces. Zero Flutter dependencies.
-*   **Data (Middle Layer):** Implementations. Handles `DataSources` (e.g., `on_audio_query`, `just_audio`), DTOs (`Models`), and Repository Implementations.
-*   **Presentation (Outer Layer):** `BLoCs` and `Widgets`. Strictly reactive UI that listens to streams.
+## Getting Started
 
-## 🚀 Key Features
+### Prerequisites
 
-*   **Offline Playback:** Scans local device storage for audio files.
-*   **Background Audio:** Leverages `audio_service` to maintain a foreground service, allowing playback to continue when the screen is off or the app is minimized.
-*   **Queue Management:** Implements `ConcatenatingAudioSource` for gapless playback and persistent queue management.
-*   **Media Notifications:** Full integration with OS media controls (Android 13+ / iOS Control Center), including Seek bars and Artwork.
-*   **Playback Modes:** Support for Shuffle and Repeat (Off/All/One).
-*   **Permission Handling:** Graceful handling of Android 13+ `READ_MEDIA_AUDIO` and legacy `READ_EXTERNAL_STORAGE` permissions.
-*   **Analytics:** Persistent, event-driven playback logging using `MusicAnalyticsService`. Includes a **Visual Dashboard** with interactive charts (Genre, Time of Day, Listening History) powered by `fl_chart`.
+- **Flutter SDK:** Stable channel (v3.10+)
+- **Platform:** Android (min SDK 21) or iOS (min 13.0). _Desktop support is experimental._
 
-## 🛠 Tech Stack
+### Installation & Run
 
-| Category | Package | Purpose |
-| :--- | :--- | :--- |
-| **State Management** | `flutter_bloc` | Predictable state transitions using Events/States. |
-| **DI** | `get_it` | Service Locator for dependency injection. |
-| **Audio Engine** | `just_audio` | Robust audio player with gapless playback support. |
-| **Background** | `audio_service` | Manages background execution and media notifications. |
-| **Query** | `on_audio_query` | Efficiently queries local content resolvers. |
-| **Functional** | `fpdart` | Error handling using `Either<Failure, Success>`. |
-| **Code Gen** | `freezed` | Immutable data classes and unions. |
-| **Database** | `sqflite` | Local storage for analytics data. |
-| **Visualization** | `fl_chart` | Interactive data visualization for the Analytics Dashboard. |
+1.  **Clone and Install:**
 
-## 📦 Project Structure
-
-```text
-lib/
-├── core/                  # Shared kernel (DI, Themes, Errors)
-├── features/
-│   ├── analytics/         # Analytics Feature
-│   │   ├── domain/        # MusicAnalyticsService & PlayLog Entity
-│   │   └── data/          # SQLite implementation
-│   ├── background-notification-feature/
-│   │   └── data/          # Service implementation (AudioHandler)
-│   ├── local music/       # Library Feature
-│   │   ├── data/          # on_audio_query implementation
-│   │   ├── domain/        # Song Entities & UseCases
-│   │   └── presentation/  # Song List UI & BLoC
-│   └── music_player/      # Playback Feature
-│       ├── data/          # Repository wrapping AudioHandler
-│       ├── domain/        # Playback Interface (Contract)
-│       └── presentation/  # Player Controls UI & BLoC
-└── main.dart              # Entry point & Initialization
-```
-
-## 🔧 Setup & Running
-
-1.  **Prerequisites:** Flutter SDK (Stable), Android Studio / VS Code.
-2.  **Dependencies:**
     ```bash
+    git clone [repository_url]
     flutter pub get
     ```
-3.  **Code Generation:**
-    If you modify BLoC states or Entities, regenerate code:
+
+2.  **Code Generation (Mandatory):**
+    This project uses `freezed` and `json_serializable`. You must run the build runner before launching:
+
     ```bash
-    flutter pub run build_runner build --delete-conflicting-outputs
+    dart run build_runner build --delete-conflicting-outputs
     ```
-4.  **Run:**
+
+3.  **Run Application:**
     ```bash
     flutter run
     ```
 
-## 🧪 Testing
+## Architecture & Design (Reference)
 
-This project emphasizes unit testing for critical logic.
-*   **Audio Handler Tests:** Verifies the integration between `just_audio` and `audio_service`.
+The codebase follows the **Feature-First** packaging strategy. Each feature is a self-contained module with its own "Three-Layer" architecture.
 
-```bash
-flutter test
+### Directory Structure
+
+```text
+lib/
+├── core/                  # Shared Kernel (DI, Themes, Failures)
+├── features/
+│   ├── analytics/         # [Feature] Listening History & Graphs
+│   ├── home/              # [Feature] Navigation Shell & Orchestration
+│   ├── local music/       # [Feature] Device Storage Scanning
+│   ├── music_player/      # [Feature] Audio Engine & UI
+│   └── onboarding/        # [Feature] First-Time User Experience
+└── main.dart              # Entry Point & Service Locator
 ```
 
+### The Three Layers (Per Feature)
+
+1.  **Domain (Inner Layer):**
+
+    - **Role:** Business Logic & Rules.
+    - **Contents:** `Entities` (Pure Dart classes), `UseCases` (Single-action classes), `Repository Interfaces`.
+    - **Dependencies:** ZERO Flutter dependencies. Pure Dart.
+
+2.  **Data (Middle Layer):**
+
+    - **Role:** Data Retrieval & Transformation.
+    - **Contents:** `DataSources` (API/DB/File), `DTOs` (Models), `Repository Implementations`.
+    - **Dependencies:** External packages (`sqflite`, `dio`, `on_audio_query`).
+
+3.  **Presentation (Outer Layer):**
+    - **Role:** UI & State Management.
+    - **Contents:** `Pages`, `Widgets`, `BLoCs` / `Cubits`.
+    - **Dependencies:** Flutter, `flutter_bloc`.
+
+## Feature Catalog
+
+| Feature          | Description                                                               | Key Tech                               |
+| :--------------- | :------------------------------------------------------------------------ | :------------------------------------- |
+| **Local Music**  | Scans device storage for audio files using `ContentResolver`.             | `on_audio_query`, `permission_handler` |
+| **Music Player** | Robust playback engine with gapless queue, shuffle, and repeat.           | `just_audio`, `audio_service`          |
+| **Analytics**    | Tracks playback history and visualizes data (Top Genres, Daily Activity). | `sqflite`, `fl_chart`                  |
+| **Onboarding**   | Manages first-run experience and persistence flags.                       | `shared_preferences`                   |
+| **Background**   | Keeps audio alive when the app is minimized or screen is off.             | `Android Foreground Service`           |
+
+## Tech Stack & Decisions
+
+| Category         | Package                 | Reasoning                                                        |
+| :--------------- | :---------------------- | :--------------------------------------------------------------- |
+| **State**        | `flutter_bloc`          | Ensures unidirectional data flow and easy testing of states.     |
+| **DI**           | `get_it`                | Decouples instantiation from usage (Service Locator pattern).    |
+| **Functional**   | `fpdart`                | Enforces error handling via `Either<Failure, Success>` types.    |
+| **Immutability** | `freezed`               | Prevents side-effects in State objects and Entities.             |
+| **Database**     | `sqflite`               | High-performance SQL engine for aggregation queries (Analytics). |
+| **Assets**       | `flutter_native_splash` | Provides a seamless launch experience on Android 12+.            |
+
+## Troubleshooting
+
+### Common Errors
+
+**Error:** `Missing concrete implementation of ...` or `The method ... isn't defined.`
+
+- **Cause:** The generated files (`*.g.dart`, `*.freezed.dart`) are out of sync.
+- **Fix:** Run `dart run build_runner build --delete-conflicting-outputs`.
+
+**Error:** `Permission denied (READ_MEDIA_AUDIO)`
+
+- **Cause:** Testing on Android 13+ emulator without granting runtime permissions.
+- **Fix:** Accept the system dialog, or manually enable permissions in App Settings.
+
 ---
-**Note:** This project handles sensitive permissions (`READ_MEDIA_AUDIO`). Ensure you test on a real device or an emulator with valid media files.
+
+_Maintained by the Engineering Team. For deep architectural changes, consult the `05_Architecture.md` manifesto._
