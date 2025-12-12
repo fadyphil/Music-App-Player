@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:just_audio_media_kit/just_audio_media_kit.dart';
 import 'package:music_player/core/theme/app_theme.dart';
 import 'package:music_player/core/usecases/usecase.dart';
 import 'package:music_player/features/home/presentation/pages/home_page.dart';
@@ -8,17 +11,26 @@ import 'package:music_player/features/analytics/domain/services/music_analytics_
 import 'package:music_player/features/music_player/presentation/bloc/music_player_bloc.dart';
 import 'package:music_player/features/onboarding/domain/usecases/check_if_user_is_first_timer.dart';
 import 'package:music_player/features/onboarding/presentation/pages/onboarding_page.dart';
-import 'package:flutter_native_splash/flutter_native_splash.dart'; // Import this
+import 'package:flutter_native_splash/flutter_native_splash.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart'; // Import this
 
 void main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+
+  JustAudioMediaKit.ensureInitialized();
+  if (Platform.isLinux || Platform.isMacOS || Platform.isWindows) {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  }
 
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
   await initDependencies();
   serviceLocator<MusicAnalyticsService>().init();
-  
-  final isFirstRunResult = await serviceLocator<CheckIfUserIsFirstTimer>()(NoParams());
+
+  final isFirstRunResult = await serviceLocator<CheckIfUserIsFirstTimer>()(
+    NoParams(),
+  );
   final isFirstRun = isFirstRunResult.fold(
     (l) => true, // Default to true on error
     (r) => r,

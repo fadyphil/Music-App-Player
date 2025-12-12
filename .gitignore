@@ -51,3 +51,4 @@ GEMINI.md
 *.freezed.dart
 *.jpeg
 data-display-ideas
+.vscode/

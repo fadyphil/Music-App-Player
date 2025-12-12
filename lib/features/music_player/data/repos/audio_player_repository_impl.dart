@@ -20,9 +20,11 @@ class AudioPlayerRepositoryImpl implements AudioPlayerRepository {
         album: song.album,
         title: song.title,
         artist: song.artist,
-        artUri: song.albumId != null 
-          ? Uri.parse("content://media/external/audio/albumart/${song.albumId}")
-          : null,
+        artUri: song.albumId != null
+            ? Uri.parse(
+                "content://media/external/audio/albumart/${song.albumId}",
+              )
+            : null,
         duration: Duration(milliseconds: song.duration.toInt()),
         extras: {'url': song.path},
       );
@@ -60,7 +62,7 @@ class AudioPlayerRepositoryImpl implements AudioPlayerRepository {
 
   @override
   Future<void> stop() => _audioHandler.stop();
-  
+
   @override
   Future<void> skipToNext() => _audioHandler.skipToNext();
 
@@ -76,14 +78,14 @@ class AudioPlayerRepositoryImpl implements AudioPlayerRepository {
 
   @override
   Future<void> setRepeatMode(int mode) {
-     final repeatMode = switch (mode) {
-       1 => AudioServiceRepeatMode.all,
-       2 => AudioServiceRepeatMode.one,
-       _ => AudioServiceRepeatMode.none,
-     };
-     return _audioHandler.setRepeatMode(repeatMode);
+    final repeatMode = switch (mode) {
+      1 => AudioServiceRepeatMode.all,
+      2 => AudioServiceRepeatMode.one,
+      _ => AudioServiceRepeatMode.none,
+    };
+    return _audioHandler.setRepeatMode(repeatMode);
   }
-  
+
   @override
   Future<void> cycleRepeatMode() async {
     // This logic relies on reading the current state.
@@ -97,26 +99,28 @@ class AudioPlayerRepositoryImpl implements AudioPlayerRepository {
   @override
   Stream<bool> get isPlayingStream =>
       _audioHandler.playbackState.map((state) => state.playing).distinct();
-      
-  @override
-  Stream<bool> get isShuffleModeEnabledStream =>
-      _audioHandler.playbackState
-          .map((state) => state.shuffleMode == AudioServiceShuffleMode.all)
-          .distinct();
 
   @override
-  Stream<int> get loopModeStream =>
-      _audioHandler.playbackState.map((state) {
-        switch (state.repeatMode) {
-          case AudioServiceRepeatMode.none: return 0;
-          case AudioServiceRepeatMode.all: return 1;
-          case AudioServiceRepeatMode.one: return 2;
-          default: return 0;
-        }
-      }).distinct();
+  Stream<bool> get isShuffleModeEnabledStream => _audioHandler.playbackState
+      .map((state) => state.shuffleMode == AudioServiceShuffleMode.all)
+      .distinct();
 
   @override
-  Stream<Duration> get positionStream => AudioService.position; 
+  Stream<int> get loopModeStream => _audioHandler.playbackState.map((state) {
+    switch (state.repeatMode) {
+      case AudioServiceRepeatMode.none:
+        return 0;
+      case AudioServiceRepeatMode.all:
+        return 1;
+      case AudioServiceRepeatMode.one:
+        return 2;
+      default:
+        return 0;
+    }
+  }).distinct();
+
+  @override
+  Stream<Duration> get positionStream => AudioService.position;
 
   @override
   Stream<Duration> get durationStream =>
@@ -124,25 +128,23 @@ class AudioPlayerRepositoryImpl implements AudioPlayerRepository {
 
   @override
   Stream<void> get playerCompleteStream => _audioHandler.playbackState
-      .where(
-        (state) =>
-            state.processingState == AudioProcessingState.completed,
-      )
+      .where((state) => state.processingState == AudioProcessingState.completed)
       .map((event) => null)
       .distinct();
-      
+
   @override
-  Stream<SongEntity?> get currentSongStream => _audioHandler.mediaItem.map((item) {
-    if (item == null) return null;
-    return SongEntity(
-      id: int.tryParse(item.id) ?? 0,
-      title: item.title,
-      artist: item.artist ?? 'Unknown',
-      album: item.album ?? 'Unknown',
-      albumId: int.tryParse(item.artUri?.pathSegments.last ?? ''),
-      path: item.extras?['url'] as String? ?? '',
-      duration: (item.duration?.inMilliseconds ?? 0).toDouble(),
-      size: 0, 
-    );
-  });
+  Stream<SongEntity?> get currentSongStream =>
+      _audioHandler.mediaItem.map((item) {
+        if (item == null) return null;
+        return SongEntity(
+          id: int.tryParse(item.id) ?? 0,
+          title: item.title,
+          artist: item.artist ?? 'Unknown',
+          album: item.album ?? 'Unknown',
+          albumId: int.tryParse(item.artUri?.pathSegments.last ?? ''),
+          path: item.extras?['url'] as String? ?? '',
+          duration: (item.duration?.inMilliseconds ?? 0).toDouble(),
+          size: 0,
+        );
+      });
 }
