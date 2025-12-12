@@ -22,4 +22,7 @@ abstract interface class AnalyticsRepository {
 
   /// Retrieves general statistics (total time, count, time of day dist) for [timeFrame].
   Future<Either<Failure, ListeningStats>> getGeneralStats(TimeFrame timeFrame);
+
+  /// Logs that the user has completed onboarding.
+  Future<Either<Failure, void>> logOnboardingComplete();
 }

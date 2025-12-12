@@ -12,6 +12,7 @@ abstract interface class AnalyticsLocalDataSource {
   Future<List<TopItem>> getTopAlbums(TimeFrame timeFrame, int limit);
   Future<List<TopItem>> getTopGenres(TimeFrame timeFrame, int limit);
   Future<ListeningStats> getGeneralStats(TimeFrame timeFrame);
+  Future<void> logOnboardingComplete();
 }
 
 class AnalyticsLocalDataSourceImpl implements AnalyticsLocalDataSource {
@@ -214,5 +215,13 @@ class AnalyticsLocalDataSourceImpl implements AnalyticsLocalDataSource {
       totalSongsPlayed: row['total_count'] as int? ?? 0,
       timeOfDayDistribution: distributionMap,
     );
+  }
+
+  @override
+  Future<void> logOnboardingComplete() async {
+    // This is a placeholder for a specific analytics event.
+    // In a real app, this might insert into a separate 'events' table
+    // or send to Firebase/Mixpanel.
+    print('Analytics: Onboarding Completed');
   }
 }

@@ -71,4 +71,17 @@ class AnalyticsRepositoryImpl implements AnalyticsRepository {
       return Left(AnalyticsFailure('Failed to fetch top songs: $e'));
     }
   }
+
+  @override
+  Future<Either<Failure, void>> logOnboardingComplete() async {
+    // Fire and forget, or actually log to DB if we had a generic event table.
+    // For now, we'll just print or assume the DataSource handles it if we add it there.
+    // Since strict adherence is required, I'll add it to DataSource first.
+    try {
+      await dataSource.logOnboardingComplete();
+      return const Right(null);
+    } catch (e) {
+      return Left(AnalyticsFailure('Failed to log onboarding complete: $e'));
+    }
+  }
 }
