@@ -53,7 +53,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     result.fold(
       (failure) => emit(ProfileState.error(failure.message)),
       (_) {
-        add(const ProfileEvent.loadProfile());
+        emit(const ProfileState.cacheCleared());
       },
     );
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:music_player/features/onboarding/presentation/pages/onboarding_page.dart';
 import '../../domain/entities/user_entity.dart';
 import '../bloc/profile_bloc.dart';
 
@@ -15,6 +16,12 @@ class ProfilePage extends StatelessWidget {
            state.maybeWhen(
              error: (msg) {
                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+             },
+             cacheCleared: () {
+               Navigator.of(context).pushAndRemoveUntil(
+                 MaterialPageRoute(builder: (context) => const OnboardingPage()),
+                 (route) => false,
+               );
              },
              orElse: () {},
            );
@@ -96,11 +103,74 @@ class _ProfileView extends StatelessWidget {
           leading: const Icon(Icons.delete_outline, color: Colors.redAccent),
           title: const Text("Clear Cache", style: TextStyle(color: Colors.white)),
           subtitle: const Text("Purge local temporal data", style: TextStyle(color: Colors.white38, fontSize: 12)),
-          onTap: () {
-            context.read<ProfileBloc>().add(const ProfileEvent.clearCache());
-          },
+          onTap: () => _showClearCacheConfirmation(context),
         ),
       ],
+    );
+  }
+
+  void _showClearCacheConfirmation(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1A1A1A),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "CONFIRM PURGE",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                letterSpacing: 1.0,
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              "This will delete all user data, analytics, and reset the application to its factory state. This action cannot be undone.",
+              style: TextStyle(color: Colors.white70),
+            ),
+            const SizedBox(height: 32),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      side: const BorderSide(color: Colors.white24),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    child: const Text("CANCEL"),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      context.read<ProfileBloc>().add(const ProfileEvent.clearCache());
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.redAccent,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    child: const Text("PURGE DATA"),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 

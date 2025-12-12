@@ -50,5 +50,6 @@ class ProfileLocalDataSourceImpl implements ProfileLocalDataSource {
     // Given I don't control the image cache directly here (cached_network_image usually manages its own),
     // I will clear the user profile as a proxy for "resetting" this feature's cache.
     await _sharedPreferences.remove(_userKey);
+    await _sharedPreferences.remove('is_first_timer');
   }
 }
