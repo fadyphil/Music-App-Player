@@ -25,6 +25,13 @@ import 'package:music_player/features/onboarding/domain/usecases/cache_first_tim
 import 'package:music_player/features/onboarding/domain/usecases/check_if_user_is_first_timer.dart';
 import 'package:music_player/features/onboarding/presentation/cubit/onboarding_cubit.dart';
 import 'package:music_player/features/home/presentation/cubit/home_cubit.dart';
+import 'package:music_player/features/profile/data/datasources/profile_local_datasource.dart';
+import 'package:music_player/features/profile/data/repositories/profile_repository_impl.dart';
+import 'package:music_player/features/profile/domain/repositories/profile_repository.dart';
+import 'package:music_player/features/profile/domain/usecases/get_user_profile.dart';
+import 'package:music_player/features/profile/domain/usecases/update_user_profile.dart';
+import 'package:music_player/features/profile/domain/usecases/clear_cache.dart';
+import 'package:music_player/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -146,4 +153,25 @@ Future<void> initDependencies() async {
   // FEATURE: HOME
   // =========================================================
   serviceLocator.registerFactory(() => HomeCubit());
+
+  // =========================================================
+  // FEATURE: PROFILE
+  // =========================================================
+  serviceLocator.registerLazySingleton<ProfileLocalDataSource>(
+    () => ProfileLocalDataSourceImpl(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton<ProfileRepository>(
+    () => ProfileRepositoryImpl(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(() => GetUserProfile(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => UpdateUserProfile(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => ClearCache(serviceLocator()));
+
+  serviceLocator.registerFactory(
+    () => ProfileBloc(
+      getUserProfile: serviceLocator(),
+      updateUserProfile: serviceLocator(),
+      clearCache: serviceLocator(),
+    ),
+  );
 }

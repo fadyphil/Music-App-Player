@@ -99,6 +99,7 @@ lib/
 | **Music Player** | Robust playback engine with gapless queue, shuffle, and repeat.           | `just_audio`, `audio_service`          |
 | **Analytics**    | Tracks playback history and visualizes data (Top Genres, Daily Activity). | `sqflite`, `fl_chart`                  |
 | **Onboarding**   | Manages first-run experience and persistence flags.                       | `shared_preferences`                   |
+| **Profile**      | User identity, customization (Nav Bar), and system cache management.      | `shared_preferences`, `bloc`           |
 | **Background**   | Keeps audio alive when the app is minimized or screen is off.             | `Android Foreground Service`           |
 
 ## Tech Stack & Decisions
