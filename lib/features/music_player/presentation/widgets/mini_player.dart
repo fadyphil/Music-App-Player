@@ -31,88 +31,103 @@ class MiniPlayer extends StatelessWidget {
               ),
             );
           },
-          child: Container(
-            margin: const EdgeInsets.all(8),
-            height: 66,
-            decoration: BoxDecoration(
-              color: AppPallete.cardColor,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Column(
-              children: [
-                Expanded(
-                  child: Row(
-                    children: [
-                      // ARTWORK (Stable)
-                      // Since 'song' is passed down and doesn't change every millisecond,
-                      // this widget will NOT rebuild during playback.
-                      Hero(
-                        tag:
-                            'currentArtwork', // Must match the tag in MusicPlayerPage
-                        child: Container(
-                          width: 50,
-                          height: 50,
-                          margin: const EdgeInsets.only(left: 8),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(4),
-                            color: AppPallete.grey,
-                          ),
-                          child: QueryArtworkWidget(
-                            id: song.id,
-                            type: ArtworkType.AUDIO,
-                            keepOldArtwork:
-                                true, // Prevents white flash when switching songs
-                            nullArtworkWidget: const Icon(
-                              Icons.music_note,
-                              color: AppPallete.white,
+          child: GestureDetector(
+            onHorizontalDragEnd: (details) {
+              if (details.primaryVelocity! >= 0) {
+                // Swiped right
+                context.read<MusicPlayerBloc>().add(
+                  const MusicPlayerEvent.playPreviousSong(),
+                );
+              } else if (details.primaryVelocity! < 0) {
+                // Swiped left
+                context.read<MusicPlayerBloc>().add(
+                  const MusicPlayerEvent.playNextSong(),
+                );
+              }
+            },
+            child: Container(
+              margin: const EdgeInsets.all(8),
+              height: 66,
+              decoration: BoxDecoration(
+                color: AppPallete.cardColor,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        // ARTWORK (Stable)
+                        // Since 'song' is passed down and doesn't change every millisecond,
+                        // this widget will NOT rebuild during playback.
+                        Hero(
+                          tag:
+                              'currentArtwork', // Must match the tag in MusicPlayerPage
+                          child: Container(
+                            width: 50,
+                            height: 50,
+                            margin: const EdgeInsets.only(left: 8),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(4),
+                              color: AppPallete.grey,
                             ),
-                            artworkHeight: 50,
-                            artworkWidth: 50,
-                            artworkBorder: BorderRadius.circular(4),
-                            artworkFit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-
-                      // TEXT (Stable)
-                      Expanded(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              song.title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
+                            child: QueryArtworkWidget(
+                              id: song.id,
+                              type: ArtworkType.AUDIO,
+                              keepOldArtwork:
+                                  true, // Prevents white flash when switching songs
+                              nullArtworkWidget: const Icon(
+                                Icons.music_note,
                                 color: AppPallete.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
                               ),
+                              artworkHeight: 50,
+                              artworkWidth: 50,
+                              artworkBorder: BorderRadius.circular(4),
+                              artworkFit: BoxFit.cover,
                             ),
-                            Text(
-                              song.artist,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: AppPallete.grey,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
-                      ),
+                        const SizedBox(width: 10),
 
-                      // PLAY BUTTON (Reactive to isPlaying only)
-                      const _PlayPauseButton(),
-                    ],
+                        // TEXT (Stable)
+                        Expanded(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                song.title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: AppPallete.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              Text(
+                                song.artist,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: AppPallete.grey,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // PLAY BUTTON (Reactive to isPlaying only)
+                        const _PlayPauseButton(),
+                      ],
+                    ),
                   ),
-                ),
 
-                // PROGRESS BAR (Reactive to position only)
-                const _MiniPlayerProgressBar(),
-              ],
+                  // PROGRESS BAR (Reactive to position only)
+                  const _MiniPlayerProgressBar(),
+                ],
+              ),
             ),
           ),
         );
