@@ -18,7 +18,15 @@ import 'package:music_player/features/local%20music/presentation/managers/local_
 import 'package:music_player/features/music_player/data/repos/audio_player_repository_impl.dart';
 import 'package:music_player/features/music_player/domain/repos/audio_player_repository.dart';
 import 'package:music_player/features/music_player/presentation/bloc/music_player_bloc.dart';
+import 'package:music_player/features/onboarding/data/datasources/onboarding_local_data_source.dart';
+import 'package:music_player/features/onboarding/data/repositories/onboarding_repository_impl.dart';
+import 'package:music_player/features/onboarding/domain/repositories/onboarding_repository.dart';
+import 'package:music_player/features/onboarding/domain/usecases/cache_first_timer.dart';
+import 'package:music_player/features/onboarding/domain/usecases/check_if_user_is_first_timer.dart';
+import 'package:music_player/features/onboarding/presentation/cubit/onboarding_cubit.dart';
+import 'package:music_player/features/home/presentation/cubit/home_cubit.dart';
 import 'package:on_audio_query/on_audio_query.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // Create the global instance
 final serviceLocator = GetIt.instance;
@@ -28,6 +36,9 @@ Future<void> initDependencies() async {
   // =========================================================
   // 1. External (Third Party Libraries)
   // =========================================================
+  final sharedPreferences = await SharedPreferences.getInstance();
+  serviceLocator.registerLazySingleton(() => sharedPreferences);
+
   serviceLocator.registerLazySingleton(() => OnAudioQuery());
   serviceLocator.registerLazySingleton(() => AudioPlayer());
   final audioHandler = await AudioService.init(
@@ -113,4 +124,26 @@ Future<void> initDependencies() async {
       getGeneralStats: serviceLocator(),
     ),
   );
+
+  // =========================================================
+  // FEATURE: ONBOARDING
+  // =========================================================
+  serviceLocator.registerLazySingleton<OnboardingLocalDataSource>(
+    () => OnboardingLocalDataSourceImpl(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton<OnboardingRepository>(
+    () => OnboardingRepositoryImpl(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(() => CacheFirstTimer(serviceLocator()));
+  serviceLocator.registerLazySingleton(
+      () => CheckIfUserIsFirstTimer(serviceLocator()));
+
+  serviceLocator.registerFactory(
+    () => OnboardingCubit(cacheFirstTimer: serviceLocator()),
+  );
+
+  // =========================================================
+  // FEATURE: HOME
+  // =========================================================
+  serviceLocator.registerFactory(() => HomeCubit());
 }

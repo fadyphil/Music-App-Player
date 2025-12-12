@@ -6,12 +6,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:music_player/features/music_player/presentation/bloc/music_player_bloc.dart';
 import 'package:music_player/features/music_player/presentation/bloc/music_player_event.dart';
-import 'package:music_player/features/music_player/presentation/widgets/mini_player.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 
 // Architecture Imports
-import 'package:music_player/features/analytics/presentation/pages/analytics_dashboard_page.dart';
 import '../../../../core/di/init_dependencies.dart';
 import '../../../../core/theme/app_pallete.dart';
 import '../../domain/entities/song_entity.dart';
@@ -141,8 +139,6 @@ class _SongListPageState extends State<SongListPage>
                   );
                 },
               ),
-            // MiniPlayer stays on top of the scroll view
-            const Positioned(left: 0, right: 0, bottom: 0, child: MiniPlayer()),
           ],
         ),
       ),
@@ -285,7 +281,7 @@ class _SliverSongLayout extends StatelessWidget {
       slivers: [
         _SongListSliverAppBar(songs: songs),
         _SongListSliverItems(songs: songs),
-        const SliverToBoxAdapter(child: SizedBox(height: 120)),
+        const SliverToBoxAdapter(child: SizedBox(height: 180)),
       ],
     );
   }
@@ -471,42 +467,7 @@ class _SongListSliverAppBar extends StatelessWidget {
       pinned: true,
       stretch: true,
       backgroundColor: Colors.transparent, // Handled by the container
-      leading: IconButton(
-        onPressed: () => Navigator.pop(context),
-        icon: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.2),
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: Colors.white,
-            size: 18,
-          ),
-        ),
-      ),
-      actions: [
-        IconButton(
-          onPressed: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const AnalyticsDashboardPage()),
-          ),
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.2),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.bar_chart_rounded,
-              color: Colors.white,
-              size: 18,
-            ),
-          ),
-        ),
-        const SizedBox(width: 16),
-      ],
+
       flexibleSpace: LayoutBuilder(
         builder: (BuildContext context, BoxConstraints constraints) {
           final top = constraints.biggest.height;
