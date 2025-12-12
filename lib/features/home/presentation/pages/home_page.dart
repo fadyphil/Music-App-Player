@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:music_player/features/music_player/presentation/widgets/mini_player.dart';
 import '../../../../core/di/init_dependencies.dart';
 import '../../../analytics/presentation/pages/analytics_dashboard_page.dart';
 import '../../../local music/presentation/pages/song_list_page.dart';
@@ -68,6 +69,14 @@ class _HomeView extends StatelessWidget {
                 ),
               ),
             ),
+          ),
+
+          // MINI PLAYER
+          const Positioned(
+            left: 0,
+            right: 0,
+            bottom: 80, // Sits on top of the NavBar (height 80)
+            child: MiniPlayer(),
           ),
 
           // NAVIGATION DECK

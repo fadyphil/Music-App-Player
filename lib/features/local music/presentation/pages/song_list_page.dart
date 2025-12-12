@@ -6,7 +6,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:music_player/features/music_player/presentation/bloc/music_player_bloc.dart';
 import 'package:music_player/features/music_player/presentation/bloc/music_player_event.dart';
-import 'package:music_player/features/music_player/presentation/widgets/mini_player.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 
@@ -141,8 +140,6 @@ class _SongListPageState extends State<SongListPage>
                   );
                 },
               ),
-            // MiniPlayer stays on top of the scroll view
-            const Positioned(left: 0, right: 0, bottom: 0, child: MiniPlayer()),
           ],
         ),
       ),
@@ -285,7 +282,7 @@ class _SliverSongLayout extends StatelessWidget {
       slivers: [
         _SongListSliverAppBar(songs: songs),
         _SongListSliverItems(songs: songs),
-        const SliverToBoxAdapter(child: SizedBox(height: 120)),
+        const SliverToBoxAdapter(child: SizedBox(height: 180)),
       ],
     );
   }
