@@ -7,8 +7,19 @@ import 'package:music_player/features/onboarding/presentation/pages/onboarding_p
 import '../../domain/entities/user_entity.dart';
 import '../bloc/profile_bloc.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  @override
+  void initState() {
+    super.initState();
+    context.read<ProfileBloc>().add(const ProfileEvent.loadProfile());
+  }
 
   @override
   Widget build(BuildContext context) {
