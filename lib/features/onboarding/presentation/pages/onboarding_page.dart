@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:music_player/core/theme/app_pallete.dart';
 import 'package:music_player/features/home/presentation/pages/home_page.dart';
 import 'package:music_player/features/onboarding/presentation/cubit/onboarding_cubit.dart';
+import 'package:music_player/features/onboarding/presentation/cubit/user_registration_cubit.dart';
+import 'package:music_player/features/onboarding/presentation/pages/user_registration_page.dart';
 import 'package:music_player/features/onboarding/presentation/widgets/onboarding_content.dart';
 import 'package:music_player/core/di/init_dependencies.dart'; // Import serviceLocator
 
@@ -46,8 +48,21 @@ class _OnboardingPageState extends State<OnboardingPage> {
         curve: Curves.easeInOut,
       );
     } else {
-      _finishOnboarding(context);
+      _navigateToRegistration(context);
     }
+  }
+
+  void _navigateToRegistration(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => BlocProvider(
+          create: (_) => serviceLocator<UserRegistrationCubit>(),
+          child: UserRegistrationPage(
+            onRegistrationComplete: () => _finishOnboarding(context),
+          ),
+        ),
+      ),
+    );
   }
 
   void _finishOnboarding(BuildContext context) {
@@ -78,8 +93,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                       padding: const EdgeInsets.all(16.0),
                       child: TextButton(
                         onPressed: () {
-                          context.read<OnboardingCubit>().cacheFirstRun();
-                          _finishOnboarding(context);
+                          _navigateToRegistration(context);
                         },
                         child: const Text(
                           'Skip',
@@ -138,9 +152,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
                         // Next/Done Button
                         ElevatedButton(
                           onPressed: () {
-                            if (currentIndex == _onboardingData.length - 1) {
-                              context.read<OnboardingCubit>().cacheFirstRun();
-                            }
                             _onNext(context, currentIndex);
                           },
                           style: ElevatedButton.styleFrom(

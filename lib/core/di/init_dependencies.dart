@@ -7,6 +7,7 @@ import 'package:music_player/features/analytics/domain/repositories/analytics_re
 import 'package:music_player/features/analytics/domain/usecases/get_general_stats.dart';
 import 'package:music_player/features/analytics/domain/usecases/get_top_items.dart';
 import 'package:music_player/features/analytics/domain/usecases/log_playback.dart';
+import 'package:music_player/features/analytics/domain/usecases/clear_analytics.dart';
 import 'package:music_player/features/analytics/domain/services/music_analytics_service.dart';
 import 'package:music_player/features/analytics/presentation/bloc/analytics_bloc.dart';
 import 'package:music_player/features/background-notification-feature/data/datasources/audio_handler.dart';
@@ -23,8 +24,17 @@ import 'package:music_player/features/onboarding/data/repositories/onboarding_re
 import 'package:music_player/features/onboarding/domain/repositories/onboarding_repository.dart';
 import 'package:music_player/features/onboarding/domain/usecases/cache_first_timer.dart';
 import 'package:music_player/features/onboarding/domain/usecases/check_if_user_is_first_timer.dart';
+import 'package:music_player/features/onboarding/domain/usecases/log_onboarding_complete.dart';
 import 'package:music_player/features/onboarding/presentation/cubit/onboarding_cubit.dart';
+import 'package:music_player/features/onboarding/presentation/cubit/user_registration_cubit.dart';
 import 'package:music_player/features/home/presentation/cubit/home_cubit.dart';
+import 'package:music_player/features/profile/data/datasources/profile_local_datasource.dart';
+import 'package:music_player/features/profile/data/repositories/profile_repository_impl.dart';
+import 'package:music_player/features/profile/domain/repositories/profile_repository.dart';
+import 'package:music_player/features/profile/domain/usecases/get_user_profile.dart';
+import 'package:music_player/features/profile/domain/usecases/update_user_profile.dart';
+import 'package:music_player/features/profile/domain/usecases/clear_cache.dart';
+import 'package:music_player/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -109,6 +119,7 @@ Future<void> initDependencies() async {
   serviceLocator.registerLazySingleton(() => GetTopAlbums(serviceLocator()));
   serviceLocator.registerLazySingleton(() => GetTopGenres(serviceLocator()));
   serviceLocator.registerLazySingleton(() => GetGeneralStats(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => ClearAnalytics(serviceLocator()));
   
   serviceLocator.registerLazySingleton(
     () => MusicAnalyticsService(serviceLocator(), serviceLocator()),
@@ -137,13 +148,44 @@ Future<void> initDependencies() async {
   serviceLocator.registerLazySingleton(() => CacheFirstTimer(serviceLocator()));
   serviceLocator.registerLazySingleton(
       () => CheckIfUserIsFirstTimer(serviceLocator()));
+  serviceLocator.registerLazySingleton(
+      () => LogOnboardingComplete(serviceLocator()));
 
   serviceLocator.registerFactory(
     () => OnboardingCubit(cacheFirstTimer: serviceLocator()),
+  );
+  serviceLocator.registerFactory(
+    () => UserRegistrationCubit(
+      updateUserProfile: serviceLocator(),
+      logOnboardingComplete: serviceLocator(),
+      cacheFirstTimer: serviceLocator(),
+    ),
   );
 
   // =========================================================
   // FEATURE: HOME
   // =========================================================
   serviceLocator.registerFactory(() => HomeCubit());
+
+  // =========================================================
+  // FEATURE: PROFILE
+  // =========================================================
+  serviceLocator.registerLazySingleton<ProfileLocalDataSource>(
+    () => ProfileLocalDataSourceImpl(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton<ProfileRepository>(
+    () => ProfileRepositoryImpl(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(() => GetUserProfile(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => UpdateUserProfile(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => ClearCache(serviceLocator()));
+
+  serviceLocator.registerFactory(
+    () => ProfileBloc(
+      getUserProfile: serviceLocator(),
+      updateUserProfile: serviceLocator(),
+      clearCache: serviceLocator(),
+      clearAnalytics: serviceLocator(),
+    ),
+  );
 }

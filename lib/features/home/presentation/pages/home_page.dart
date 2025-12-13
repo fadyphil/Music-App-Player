@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:music_player/features/music_player/presentation/widgets/mini_player.dart';
+import 'package:music_player/features/profile/domain/entities/user_entity.dart';
+import 'package:music_player/features/profile/presentation/bloc/profile_bloc.dart';
 import '../../../../core/di/init_dependencies.dart';
 import '../../../analytics/presentation/pages/analytics_dashboard_page.dart';
 import '../../../local music/presentation/pages/song_list_page.dart';
 import '../cubit/home_cubit.dart';
 import '../cubit/home_state.dart';
-// import '../widgets/prism_knob_navigation.dart'; // Option 1
-// import '../widgets/neural_string_navigation.dart'; // Option 2
+import '../widgets/prism_knob_navigation.dart';
+import '../widgets/neural_string_navigation.dart';
 // import '../widgets/gravity_dock_navigation.dart'; // Option 3
 import '../widgets/simple_animated_nav_bar.dart'; // Option 4: Simple Animated Nav Bar
-import 'profile_page.dart';
+import 'package:music_player/features/profile/presentation/pages/profile_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -85,12 +87,43 @@ class _HomeView extends StatelessWidget {
             right: 0,
             bottom: 0,
             child: BlocBuilder<HomeCubit, HomeState>(
-              builder: (context, state) {
-                // CURRENT SELECTION: SIMPLE ANIMATED NAV BAR
-                return SimpleAnimatedNavBar(
-                  selectedTab: state.selectedTab,
-                  onTabSelected: (tab) {
-                    context.read<HomeCubit>().setTab(tab);
+              builder: (homeContext, homeState) {
+                return BlocBuilder<ProfileBloc, ProfileState>(
+                  builder: (context, profileState) {
+                    NavBarStyle style = NavBarStyle.simple;
+                    profileState.maybeWhen(
+                      loaded: (user) {
+                        style = user.preferredNavBar;
+                      },
+                      orElse: () {},
+                    );
+
+                    Widget navBar;
+                    switch (style) {
+                      case NavBarStyle.prism:
+                        navBar = PrismKnobNavigation(
+                          selectedTab: homeState.selectedTab,
+                          onTabSelected: (tab) =>
+                              context.read<HomeCubit>().setTab(tab),
+                        );
+                        break;
+                      case NavBarStyle.neural:
+                        navBar = NeuralStringNavigation(
+                          selectedTab: homeState.selectedTab,
+                          onTabSelected: (tab) =>
+                              context.read<HomeCubit>().setTab(tab),
+                        );
+                        break;
+                      case NavBarStyle.simple:
+                      default:
+                        navBar = SimpleAnimatedNavBar(
+                          selectedTab: homeState.selectedTab,
+                          onTabSelected: (tab) =>
+                              context.read<HomeCubit>().setTab(tab),
+                        );
+                    }
+
+                    return navBar;
                   },
                 );
               },
