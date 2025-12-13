@@ -16,7 +16,7 @@
 
     <!-- 2. THE APPLICATION TAG STARTS HERE -->
     <application
-        android:label="Spotify el 8alaba"
+        android:label="AudioGraphy"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
 

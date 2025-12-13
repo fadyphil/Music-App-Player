@@ -96,9 +96,8 @@ flutter:
   shaders: []
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
-  #   - images/a_dot_ham.jpeg
+  assets:
+    - assets/images/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
@@ -128,17 +127,17 @@ flutter:
 flutter_launcher_icons:
   android: "launcher_icon"
   iOS: true
-  image_path: "assets/images/logo.png"
+  image_path: "assets/images/app_logo.png"
   min_sdk_android: 21 # Best practice for modern apps
   adaptive_icon_background: "#121212" # Matches your dark theme
-  adaptive_icon_foreground: "assets/images/logo.png"
+  adaptive_icon_foreground: "assets/images/app_logo.png"
 
 flutter_native_splash:
   color: "#121212" # Your app's background color (Deep Dark)
-  image: "assets/images/logo.png"
+  image: "assets/images/app_logo.png"
   fullscreen: true
 
   # Android 12+ specific (The icon in the circle)
   android_12:
-    image: "assets/images/logo.png"
+    image: "assets/images/app_logo.png"
     icon_background_color: "#121212"
