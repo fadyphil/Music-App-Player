@@ -52,3 +52,6 @@ GEMINI.md
 *.jpeg
 data-display-ideas
 .vscode/
+
+# Ignore generated problem reports
+android/build/reports/problems/problems-report.html
