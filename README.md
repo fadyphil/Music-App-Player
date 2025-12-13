@@ -136,5 +136,3 @@ lib/
 - **Fix:** Ensure top-level pages are wrapped in `Scaffold`.
 
 ---
-
-_Maintained by the Engineering Team. For deep architectural changes, consult the `05_Architecture.md` manifesto._
