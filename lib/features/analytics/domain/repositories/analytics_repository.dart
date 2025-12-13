@@ -25,4 +25,7 @@ abstract interface class AnalyticsRepository {
 
   /// Logs that the user has completed onboarding.
   Future<Either<Failure, void>> logOnboardingComplete();
+
+  /// Clears all analytics data.
+  Future<Either<Failure, void>> clearData();
 }

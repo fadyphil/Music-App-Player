@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:music_player/features/onboarding/presentation/pages/onboarding_page.dart';
@@ -44,6 +45,12 @@ class _ProfileView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final imageProvider = user.avatarUrl.isNotEmpty
+        ? (user.avatarUrl.startsWith('http')
+            ? NetworkImage(user.avatarUrl)
+            : FileImage(File(user.avatarUrl)) as ImageProvider)
+        : null;
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(24, 80, 24, 160),
       children: [
@@ -54,9 +61,7 @@ class _ProfileView extends StatelessWidget {
               CircleAvatar(
                 radius: 60,
                 backgroundColor: Colors.white10,
-                backgroundImage: user.avatarUrl.isNotEmpty 
-                    ? NetworkImage(user.avatarUrl) 
-                    : null,
+                backgroundImage: imageProvider,
                 child: user.avatarUrl.isEmpty 
                     ? const Icon(Icons.person, size: 60, color: Colors.white54)
                     : null,

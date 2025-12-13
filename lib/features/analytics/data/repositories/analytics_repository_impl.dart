@@ -84,4 +84,14 @@ class AnalyticsRepositoryImpl implements AnalyticsRepository {
       return Left(AnalyticsFailure('Failed to log onboarding complete: $e'));
     }
   }
+
+  @override
+  Future<Either<Failure, void>> clearData() async {
+    try {
+      await dataSource.clearAllData();
+      return const Right(null);
+    } catch (e) {
+      return Left(AnalyticsFailure('Failed to clear analytics data: $e'));
+    }
+  }
 }

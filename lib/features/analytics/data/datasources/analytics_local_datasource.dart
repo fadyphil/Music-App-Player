@@ -13,6 +13,7 @@ abstract interface class AnalyticsLocalDataSource {
   Future<List<TopItem>> getTopGenres(TimeFrame timeFrame, int limit);
   Future<ListeningStats> getGeneralStats(TimeFrame timeFrame);
   Future<void> logOnboardingComplete();
+  Future<void> clearAllData();
 }
 
 class AnalyticsLocalDataSourceImpl implements AnalyticsLocalDataSource {
@@ -223,5 +224,11 @@ class AnalyticsLocalDataSourceImpl implements AnalyticsLocalDataSource {
     // In a real app, this might insert into a separate 'events' table
     // or send to Firebase/Mixpanel.
     print('Analytics: Onboarding Completed');
+  }
+
+  @override
+  Future<void> clearAllData() async {
+    final database = await db;
+    await database.delete(_tableName);
   }
 }
