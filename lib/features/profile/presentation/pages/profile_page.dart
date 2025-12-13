@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:music_player/features/onboarding/presentation/pages/onboarding_page.dart';
 import '../../domain/entities/user_entity.dart';
 import '../bloc/profile_bloc.dart';
@@ -58,13 +60,32 @@ class _ProfileView extends StatelessWidget {
         Center(
           child: Column(
             children: [
-              CircleAvatar(
-                radius: 60,
-                backgroundColor: Colors.white10,
-                backgroundImage: imageProvider,
-                child: user.avatarUrl.isEmpty 
-                    ? const Icon(Icons.person, size: 60, color: Colors.white54)
-                    : null,
+              GestureDetector(
+                onTap: () => _showEditDialog(context, user),
+                child: Stack(
+                  children: [
+                    CircleAvatar(
+                      radius: 60,
+                      backgroundColor: Colors.white10,
+                      backgroundImage: imageProvider,
+                      child: user.avatarUrl.isEmpty 
+                          ? const Icon(Icons.person, size: 60, color: Colors.white54)
+                          : null,
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: const BoxDecoration(
+                          color: Colors.greenAccent,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.camera_alt, color: Colors.black, size: 20),
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
               Text(
@@ -182,45 +203,76 @@ class _ProfileView extends StatelessWidget {
   void _showEditDialog(BuildContext context, UserEntity user) {
     final nameCtrl = TextEditingController(text: user.username);
     final emailCtrl = TextEditingController(text: user.email);
+    String currentAvatarPath = user.avatarUrl;
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1A1A1A),
-        title: const Text("Update Identity", style: TextStyle(color: Colors.white)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameCtrl,
-              style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(labelText: "Username"),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            backgroundColor: const Color(0xFF1A1A1A),
+            title: const Text("Update Identity", style: TextStyle(color: Colors.white)),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                 GestureDetector(
+                  onTap: () async {
+                    final ImagePicker picker = ImagePicker();
+                    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+                    if (image != null) {
+                      setState(() {
+                        currentAvatarPath = image.path;
+                      });
+                      HapticFeedback.lightImpact();
+                    }
+                  },
+                  child: CircleAvatar(
+                    radius: 40,
+                    backgroundColor: Colors.white10,
+                    backgroundImage: currentAvatarPath.isNotEmpty
+                        ? (currentAvatarPath.startsWith('http')
+                            ? NetworkImage(currentAvatarPath)
+                            : FileImage(File(currentAvatarPath)) as ImageProvider)
+                        : null,
+                    child: currentAvatarPath.isEmpty 
+                        ? const Icon(Icons.add_a_photo, color: Colors.white54)
+                        : null,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: nameCtrl,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(labelText: "Username"),
+                ),
+                TextField(
+                  controller: emailCtrl,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(labelText: "Email"),
+                ),
+              ],
             ),
-            TextField(
-              controller: emailCtrl,
-              style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(labelText: "Email"),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text("Cancel"),
-          ),
-          TextButton(
-            onPressed: () {
-              context.read<ProfileBloc>().add(
-                ProfileEvent.updateProfile(user.copyWith(
-                  username: nameCtrl.text,
-                  email: emailCtrl.text,
-                )),
-              );
-              Navigator.pop(ctx);
-            },
-            child: const Text("Save"),
-          ),
-        ],
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text("Cancel"),
+              ),
+              TextButton(
+                onPressed: () {
+                  context.read<ProfileBloc>().add(
+                    ProfileEvent.updateProfile(user.copyWith(
+                      username: nameCtrl.text,
+                      email: emailCtrl.text,
+                      avatarUrl: currentAvatarPath,
+                    )),
+                  );
+                  Navigator.pop(ctx);
+                },
+                child: const Text("Save"),
+              ),
+            ],
+          );
+        }
       ),
     );
   }
