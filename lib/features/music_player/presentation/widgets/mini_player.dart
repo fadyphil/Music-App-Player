@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:music_player/features/local%20music/domain/entities/song_entity.dart';
 import 'package:music_player/features/music_player/presentation/pages/music_player_page.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 import '../../../../core/theme/app_pallete.dart';
@@ -8,42 +8,76 @@ import '../bloc/music_player_bloc.dart';
 import '../bloc/music_player_event.dart';
 import '../bloc/music_player_state.dart';
 
-class MiniPlayer extends StatelessWidget {
+class MiniPlayer extends StatefulWidget {
   const MiniPlayer({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // 1. Top Level Selector: ONLY rebuilds if the current song changes.
-    // This stops the Container from repainting constantly.
-    return BlocSelector<MusicPlayerBloc, MusicPlayerState, SongEntity?>(
-      selector: (state) => state.currentSong,
-      builder: (context, song) {
-        if (song == null) return const SizedBox.shrink();
+  State<MiniPlayer> createState() => _MiniPlayerState();
+}
 
-        return GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) {
-                  return const MusicPlayerPage();
-                },
-              ),
-            );
-          },
-          child: GestureDetector(
-            onHorizontalDragEnd: (details) {
-              if (details.primaryVelocity! >= 0) {
-                // Swiped right
-                context.read<MusicPlayerBloc>().add(
-                  const MusicPlayerEvent.playPreviousSong(),
-                );
-              } else if (details.primaryVelocity! < 0) {
-                // Swiped left
-                context.read<MusicPlayerBloc>().add(
-                  const MusicPlayerEvent.playNextSong(),
-                );
-              }
+class _MiniPlayerState extends State<MiniPlayer> {
+  late PageController _pageController;
+  int _lastKnownIndex = 0;
+  bool _isUserScrolling = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<MusicPlayerBloc, MusicPlayerState>(
+      listenWhen: (previous, current) =>
+          previous.currentIndex != current.currentIndex,
+      listener: (context, state) {
+        if (_pageController.hasClients && !_isUserScrolling) {
+          final currentPage = _pageController.page?.round() ?? 0;
+          if (currentPage != state.currentIndex) {
+             _lastKnownIndex = state.currentIndex;
+             _pageController.jumpToPage(state.currentIndex);
+          }
+        }
+      },
+      child: BlocBuilder<MusicPlayerBloc, MusicPlayerState>(
+        buildWhen: (previous, current) =>
+            previous.currentSong != current.currentSong ||
+            previous.queue != current.queue,
+        builder: (context, state) {
+          final song = state.currentSong;
+          if (song == null) return const SizedBox.shrink();
+
+          // Sync controller if it's the first load or desynced
+          if (_pageController.hasClients && !_isUserScrolling &&
+              (_pageController.page?.round() ?? 0) != state.currentIndex) {
+             WidgetsBinding.instance.addPostFrameCallback((_) {
+               if (_pageController.hasClients && !_isUserScrolling) {
+                 _pageController.jumpToPage(state.currentIndex);
+               }
+             });
+          }
+
+          // Safe Queue Access
+          final queue = state.queue.isEmpty ? [song] : state.queue;
+          final itemCount = queue.length;
+
+          return GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) {
+                    return const MusicPlayerPage();
+                  },
+                ),
+              );
             },
             child: Container(
               margin: const EdgeInsets.all(8),
@@ -58,11 +92,8 @@ class MiniPlayer extends StatelessWidget {
                     child: Row(
                       children: [
                         // ARTWORK (Stable)
-                        // Since 'song' is passed down and doesn't change every millisecond,
-                        // this widget will NOT rebuild during playback.
                         Hero(
-                          tag:
-                              'currentArtwork', // Must match the tag in MusicPlayerPage
+                          tag: 'currentArtwork',
                           child: Container(
                             width: 50,
                             height: 50,
@@ -74,8 +105,6 @@ class MiniPlayer extends StatelessWidget {
                             child: QueryArtworkWidget(
                               id: song.id,
                               type: ArtworkType.AUDIO,
-                              keepOldArtwork:
-                                  true, // Prevents white flash when switching songs
                               nullArtworkWidget: const Icon(
                                 Icons.music_note,
                                 color: AppPallete.white,
@@ -87,51 +116,102 @@ class MiniPlayer extends StatelessWidget {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: 12),
 
-                        // TEXT (Stable)
+                        // TEXT (PageView for Swiping)
                         Expanded(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                song.title,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  color: AppPallete.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              Text(
-                                song.artist,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  color: AppPallete.grey,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
+                          child: NotificationListener<UserScrollNotification>(
+                            onNotification: (notification) {
+                              if (notification.direction == ScrollDirection.idle) {
+                                _isUserScrolling = false;
+                              } else {
+                                _isUserScrolling = true;
+                              }
+                              return false;
+                            },
+                            child: PageView.builder(
+                              controller: _pageController,
+                              itemCount: itemCount,
+                              physics: const BouncingScrollPhysics(),
+                              onPageChanged: (index) {
+                                  // Only trigger if meaningful change
+                                  if (index != _lastKnownIndex) {
+                                    _lastKnownIndex = index;
+                                    context.read<MusicPlayerBloc>().add(
+                                      MusicPlayerEvent.initMusicQueue(
+                                        songs: queue,
+                                        currentIndex: index,
+                                      ),
+                                    );
+                                  }
+                              },
+                              itemBuilder: (context, index) {
+                                final itemSong = queue[index];
+                                return RepaintBoundary(
+                                  child: AnimatedBuilder(
+                                    animation: _pageController,
+                                    builder: (context, child) {
+                                      double opacity = 1.0;
+                                      if (_pageController.position.haveDimensions) {
+                                         double page = _pageController.page ?? 0;
+                                         double dist = (page - index).abs();
+                                         // Smoother cubic fade
+                                         opacity = (1 - (dist * dist * dist)).clamp(0.0, 1.0);
+                                      }
+                                      return Opacity(
+                                        opacity: opacity,
+                                        child: child,
+                                      );
+                                    },
+                                    child: Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            itemSong.title,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                              color: AppPallete.white,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                          Text(
+                                            itemSong.artist,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                              color: AppPallete.grey,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
                           ),
                         ),
 
-                        // PLAY BUTTON (Reactive to isPlaying only)
+                        // PLAY BUTTON
                         const _PlayPauseButton(),
                       ],
                     ),
                   ),
 
-                  // PROGRESS BAR (Reactive to position only)
+                  // PROGRESS BAR
                   const _MiniPlayerProgressBar(),
                 ],
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }
