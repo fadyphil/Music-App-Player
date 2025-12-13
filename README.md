@@ -25,6 +25,7 @@ Unlike simple "todo apps," this project tackles real-world complexity:
 - **Background Audio:** Managing Android/iOS media sessions (`MediaSessionService`) when the app is killed.
 - **Persistence:** A local SQLite database for analytics and `SharedPreferences` for flags.
 - **Hardware Permissions:** Graceful handling of Android 13+ granular media permissions.
+- **User Identity:** Local-first user profiles with avatar customization and physics-based interactions.
 
 ## Getting Started
 
@@ -68,7 +69,8 @@ lib/
 │   ├── home/              # [Feature] Navigation Shell & Orchestration
 │   ├── local music/       # [Feature] Device Storage Scanning
 │   ├── music_player/      # [Feature] Audio Engine & UI
-│   └── onboarding/        # [Feature] First-Time User Experience
+│   ├── onboarding/        # [Feature] First-Time User Experience & Registration
+│   └── profile/           # [Feature] User Identity & System Settings
 └── main.dart              # Entry Point & Service Locator
 ```
 
@@ -98,8 +100,8 @@ lib/
 | **Local Music**  | Scans device storage for audio files using `ContentResolver`.             | `on_audio_query`, `permission_handler` |
 | **Music Player** | Robust playback engine with gapless queue, shuffle, and repeat.           | `just_audio`, `audio_service`          |
 | **Analytics**    | Tracks playback history and visualizes data (Top Genres, Daily Activity). | `sqflite`, `fl_chart`                  |
-| **Onboarding**   | Manages first-run experience and persistence flags.                       | `shared_preferences`                   |
-| **Profile**      | User identity, customization (Nav Bar), and system cache management.      | `shared_preferences`, `bloc`           |
+| **Onboarding**   | First-run experience with "Auditory Profile" registration (Avatar/Name).  | `flutter_animate`, `bloc`              |
+| **Profile**      | User identity management, UI customization, and Deep Cache Purge.         | `image_picker`, `path_provider`        |
 | **Background**   | Keeps audio alive when the app is minimized or screen is off.             | `Android Foreground Service`           |
 
 ## Tech Stack & Decisions
@@ -111,6 +113,7 @@ lib/
 | **Functional**   | `fpdart`                | Enforces error handling via `Either<Failure, Success>` types.    |
 | **Immutability** | `freezed`               | Prevents side-effects in State objects and Entities.             |
 | **Database**     | `sqflite`               | High-performance SQL engine for aggregation queries (Analytics). |
+| **Media**        | `image_picker`          | Native image selection for user avatars.                         |
 | **Assets**       | `flutter_native_splash` | Provides a seamless launch experience on Android 12+.            |
 
 ## Troubleshooting
@@ -126,6 +129,11 @@ lib/
 
 - **Cause:** Testing on Android 13+ emulator without granting runtime permissions.
 - **Fix:** Accept the system dialog, or manually enable permissions in App Settings.
+
+**Error:** `No Material widget found`
+
+- **Cause:** Using Material widgets (like `TextField`) without a `Scaffold` or `Material` ancestor.
+- **Fix:** Ensure top-level pages are wrapped in `Scaffold`.
 
 ---
 
