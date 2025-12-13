@@ -14,6 +14,7 @@ abstract interface class AnalyticsLocalDataSource {
   Future<ListeningStats> getGeneralStats(TimeFrame timeFrame);
   Future<void> logOnboardingComplete();
   Future<void> clearAllData();
+  Future<Map<int, int>> getAllSongPlayCounts();
 }
 
 class AnalyticsLocalDataSourceImpl implements AnalyticsLocalDataSource {
@@ -226,9 +227,56 @@ class AnalyticsLocalDataSourceImpl implements AnalyticsLocalDataSource {
     print('Analytics: Onboarding Completed');
   }
 
-  @override
-  Future<void> clearAllData() async {
-    final database = await db;
-    await database.delete(_tableName);
+    @override
+
+    Future<void> clearAllData() async {
+
+      final database = await db;
+
+      await database.delete(_tableName);
+
+    }
+
+  
+
+    @override
+
+    Future<Map<int, int>> getAllSongPlayCounts() async {
+
+      final database = await db;
+
+      final result = await database.rawQuery('''
+
+        SELECT 
+
+          song_id, 
+
+          COUNT(*) as count 
+
+        FROM $_tableName 
+
+        GROUP BY song_id
+
+      ''');
+
+  
+
+      final Map<int, int> counts = {};
+
+      for (final row in result) {
+
+        if (row['song_id'] != null) {
+
+          counts[row['song_id'] as int] = row['count'] as int;
+
+        }
+
+      }
+
+      return counts;
+
+    }
+
   }
-}
+
+  

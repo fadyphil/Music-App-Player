@@ -23,6 +23,9 @@ abstract interface class AnalyticsRepository {
   /// Retrieves general statistics (total time, count, time of day dist) for [timeFrame].
   Future<Either<Failure, ListeningStats>> getGeneralStats(TimeFrame timeFrame);
 
+  /// Retrieves a map of song_id to play count for ALL time.
+  Future<Either<Failure, Map<int, int>>> getAllSongPlayCounts();
+
   /// Logs that the user has completed onboarding.
   Future<Either<Failure, void>> logOnboardingComplete();
 
