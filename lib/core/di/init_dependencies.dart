@@ -6,6 +6,7 @@ import 'package:music_player/features/analytics/data/repositories/analytics_repo
 import 'package:music_player/features/analytics/domain/repositories/analytics_repository.dart';
 import 'package:music_player/features/analytics/domain/usecases/get_general_stats.dart';
 import 'package:music_player/features/analytics/domain/usecases/get_top_items.dart';
+import 'package:music_player/features/analytics/domain/usecases/get_all_song_play_counts.dart';
 import 'package:music_player/features/analytics/domain/usecases/log_playback.dart';
 import 'package:music_player/features/analytics/domain/usecases/clear_analytics.dart';
 import 'package:music_player/features/analytics/domain/services/music_analytics_service.dart';
@@ -88,7 +89,10 @@ Future<void> initDependencies() async {
   // =========================================================
   // 4. Presentation Layer (Bloc)
   // =========================================================
-  serviceLocator.registerFactory(() => LocalMusicBloc(serviceLocator()));
+  serviceLocator.registerFactory(() => LocalMusicBloc(
+        serviceLocator(),
+        serviceLocator(),
+      ));
 
   // =========================================================
   // FEATURE: MUSIC PLAYER
@@ -114,6 +118,7 @@ Future<void> initDependencies() async {
   );
 
   serviceLocator.registerLazySingleton(() => LogPlayback(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => GetAllSongPlayCounts(serviceLocator()));
   serviceLocator.registerLazySingleton(() => GetTopSongs(serviceLocator()));
   serviceLocator.registerLazySingleton(() => GetTopArtists(serviceLocator()));
   serviceLocator.registerLazySingleton(() => GetTopAlbums(serviceLocator()));

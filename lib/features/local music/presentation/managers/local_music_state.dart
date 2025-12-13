@@ -7,6 +7,9 @@ part 'local_music_state.freezed.dart';
 class LocalMusicState with _$LocalMusicState {
   const factory LocalMusicState.initial() = _Initial;
   const factory LocalMusicState.loading() = _Loading;
-  const factory LocalMusicState.loaded(List<SongEntity> songs) = _Loaded;
+  const factory LocalMusicState.loaded(
+    List<SongEntity> songs, {
+    @Default({}) Map<int, int> playCounts,
+  }) = _Loaded;
   const factory LocalMusicState.failure(Failure failure) = _Error;
 }
